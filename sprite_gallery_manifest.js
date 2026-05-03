@@ -1,0 +1,2 @@
+window.SPRITE_LATEST_LIMIT = 10;
+window.SPRITE_SHEETS = [];

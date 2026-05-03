@@ -1,0 +1,1381 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sprite Sheet Viewer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #1d2024;
+      --panel: #292d33;
+      --panel-2: #23272c;
+      --line: #444b55;
+      --text: #f1f3f4;
+      --muted: #aeb6c0;
+      --accent: #69c0a3;
+      --accent-2: #e9b75f;
+      --danger: #d87575;
+      --canvas-bg: #15171a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+    }
+
+    .stage {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      border-right: 1px solid var(--line);
+      background: #202328;
+    }
+
+    .topbar,
+    .timeline {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .timeline {
+      border-top: 1px solid var(--line);
+      border-bottom: 0;
+    }
+
+    .title {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-right: auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 650;
+      line-height: 1.2;
+    }
+
+    .path {
+      color: var(--muted);
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 52vw;
+    }
+
+    .viewport {
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background:
+        linear-gradient(45deg, #1a1d21 25%, transparent 25%),
+        linear-gradient(-45deg, #1a1d21 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1a1d21 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1d21 75%);
+      background-color: var(--canvas-bg);
+      background-size: 32px 32px;
+      background-position: 0 0, 0 16px, 16px -16px, -16px 0;
+    }
+
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.32);
+      background: transparent;
+      max-width: none;
+    }
+
+    .icon-button {
+      width: 38px;
+      height: 38px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--text);
+      background: #343a42;
+      cursor: pointer;
+    }
+
+    .icon-button:hover {
+      border-color: var(--accent);
+      background: #3b454c;
+    }
+
+    .icon-button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .icon-button:disabled:hover {
+      border-color: var(--line);
+      background: #343a42;
+    }
+
+    .icon-button:active {
+      transform: translateY(1px);
+    }
+
+    .icon-button.primary {
+      color: #10231d;
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 800;
+    }
+
+    .icon-button.pinned {
+      color: var(--accent-2);
+      border-color: color-mix(in srgb, var(--accent-2), transparent 24%);
+      background: #3d3729;
+    }
+
+    .side {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+    }
+
+    .side-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .side-header h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .controls {
+      display: grid;
+      gap: 18px;
+      padding: 16px;
+      overflow: auto;
+    }
+
+    .group {
+      display: grid;
+      gap: 10px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .group:last-child {
+      border-bottom: 0;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr) 64px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .row.compact {
+      grid-template-columns: 92px minmax(0, 1fr);
+    }
+
+    label,
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      height: 34px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--text);
+      background: #181b1f;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    input[type="file"] {
+      width: 100%;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .value {
+      color: var(--text);
+      font-size: 12px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .meter {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      min-height: 56px;
+      display: grid;
+      align-content: center;
+      gap: 2px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #20242a;
+    }
+
+    .stat span:first-child {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 650;
+    }
+
+    .stat span:last-child {
+      color: var(--text);
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .timeline input {
+      flex: 1;
+      min-width: 120px;
+      height: 28px;
+      cursor: ew-resize;
+    }
+
+    .frame-readout {
+      min-width: 96px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      cursor: default;
+      user-select: none;
+    }
+
+    .drop-warning {
+      display: none;
+      padding: 8px 10px;
+      border: 1px solid color-mix(in srgb, var(--danger), transparent 40%);
+      border-radius: 6px;
+      color: #ffd6d6;
+      background: rgba(216, 117, 117, 0.12);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .drop-warning.visible {
+      display: block;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .gallery-section {
+      display: grid;
+      gap: 6px;
+    }
+
+    .gallery-section + .gallery-section {
+      margin-top: 6px;
+    }
+
+    .gallery-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .gallery-count {
+      color: #d0d6dc;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .empty-gallery {
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      border: 1px dashed var(--line);
+      border-radius: 6px;
+      color: var(--muted);
+      background: #20242a;
+      font-size: 12px;
+    }
+
+    .gallery-item {
+      width: 100%;
+      aspect-ratio: 1;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--text);
+      background: #20242a;
+      cursor: pointer;
+    }
+
+    .gallery-item:hover,
+    .gallery-item.active {
+      border-color: var(--accent);
+      background: #263139;
+    }
+
+    .gallery-thumb {
+      width: 100%;
+      height: 100%;
+      border: 1px solid #15181c;
+      border-radius: 4px;
+      background-color: #111316;
+      background-repeat: no-repeat;
+      background-position: left center;
+      background-size: auto 100%;
+    }
+
+    .library-picker {
+      display: grid;
+      gap: 8px;
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .stage {
+        min-height: 58vh;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .path {
+        max-width: 72vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="stage" aria-label="Sprite animation">
+      <div class="topbar">
+        <div class="title">
+          <h1>Sprite Sheet Viewer</h1>
+          <div class="path" id="sheetPath">Final Sprite Sheets</div>
+        </div>
+        <button class="icon-button" id="pinButton" type="button" title="Pin sheet" aria-label="Pin sheet" aria-pressed="false">☆</button>
+        <button class="icon-button" id="prevButton" type="button" title="Previous frame" aria-label="Previous frame">⏮</button>
+        <button class="icon-button primary" id="playButton" type="button" title="Play or pause" aria-label="Play or pause">▶</button>
+        <button class="icon-button" id="nextButton" type="button" title="Next frame" aria-label="Next frame">⏭</button>
+      </div>
+
+      <div class="viewport" id="viewport">
+        <canvas id="spriteCanvas" width="256" height="256"></canvas>
+      </div>
+
+      <div class="timeline">
+        <input id="frameSlider" type="range" min="0" max="31" value="0" aria-label="Frame">
+        <div class="frame-readout" id="frameReadout">1 / 32</div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="side-header">
+        <h2>Playback</h2>
+      </div>
+      <div class="controls">
+        <section class="group">
+          <div class="row">
+            <label for="fpsInput">FPS</label>
+            <input id="fpsRange" type="range" min="1" max="60" step="1" value="12">
+            <input id="fpsInput" type="number" min="1" max="60" step="1" value="12">
+          </div>
+          <div class="row">
+            <label for="scaleInput">Scale</label>
+            <input id="scaleRange" type="range" min="1" max="5" step="0.25" value="1">
+            <input id="scaleInput" type="number" min="0.25" max="8" step="0.25" value="1">
+          </div>
+          <div class="row compact">
+            <label for="backgroundSelect">Back</label>
+            <select id="backgroundSelect">
+              <option value="checker">Checker</option>
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="group">
+          <div class="row">
+            <label for="frameWidthInput">Width</label>
+            <input id="frameWidthInput" type="number" min="1" step="1" value="256">
+            <div class="value">px</div>
+          </div>
+          <div class="row">
+            <label for="frameHeightInput">Height</label>
+            <input id="frameHeightInput" type="number" min="1" step="1" value="256">
+            <div class="value">px</div>
+          </div>
+          <div class="row">
+            <label for="frameCountInput">Frames</label>
+            <input id="frameCountInput" type="number" min="1" step="1" value="32">
+            <div class="value" id="inferValue">auto</div>
+          </div>
+        </section>
+
+        <section class="group">
+          <div class="gallery-section" id="pinnedSection">
+            <div class="gallery-heading">
+              <span>Pinned</span>
+              <span class="gallery-count" id="pinnedCount">0</span>
+            </div>
+            <div class="gallery" id="pinnedGallery"></div>
+          </div>
+          <div class="gallery-section">
+            <div class="gallery-heading">
+              <span>Last 10</span>
+            </div>
+            <div class="gallery" id="gallery"></div>
+          </div>
+          <div class="library-picker">
+            <div class="row compact">
+              <label for="gameSelect">Game</label>
+              <select id="gameSelect"></select>
+            </div>
+            <div class="row compact" id="characterRow">
+              <label for="characterSelect">Character</label>
+              <select id="characterSelect"></select>
+            </div>
+            <div class="row compact">
+              <label for="animationSelect">Anim</label>
+              <select id="animationSelect"></select>
+            </div>
+          </div>
+          <div class="row compact">
+            <label for="sheetFileInput">Sheet</label>
+            <input id="sheetFileInput" type="file" accept="image/png,image/webp,image/jpeg">
+          </div>
+          <div class="drop-warning" id="warning"></div>
+        </section>
+
+        <section class="group">
+          <div class="meter">
+            <div class="stat">
+              <span>Sheet</span>
+              <span id="sheetSize">8192 x 256</span>
+            </div>
+            <div class="stat">
+              <span>Frame</span>
+              <span id="frameSize">256 x 256</span>
+            </div>
+            <div class="stat">
+              <span>Duration</span>
+              <span id="durationStat">2.67s</span>
+            </div>
+            <div class="stat">
+              <span>Size</span>
+              <span id="fileSizeStat">unknown</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </main>
+
+  <script src="sprite_gallery_manifest.js"></script>
+  <script>
+    const RAW_SHEETS = Array.isArray(window.SPRITE_SHEETS) ? window.SPRITE_SHEETS : [];
+    const LATEST_LIMIT = Math.max(1, Number(window.SPRITE_LATEST_LIMIT) || 10);
+    const LAST_GAME_VALUE = "__last_10__";
+    const PIN_STORAGE_KEY = "sprite-viewer-pinned-sheets-v1";
+    const SHEET_METADATA_STORAGE_KEY = "sprite-viewer-sheet-metadata-v1";
+    const PINNED_JSON_PATH = "sprite_gallery_pins.json";
+    const DEFAULT_FPS = 12;
+    const SHEETS = RAW_SHEETS.map((sheet) => ({
+      ...sheet,
+      ...folderParts(sheet)
+    }));
+    const DEFAULT_SHEET_ENTRY = SHEETS.length ? SHEETS[0] : null;
+    const DEFAULT_SHEET = DEFAULT_SHEET_ENTRY
+      ? DEFAULT_SHEET_ENTRY.path
+      : "";
+
+    const state = {
+      image: new Image(),
+      imageLoaded: false,
+      frameWidth: 256,
+      frameHeight: 256,
+      frameCount: DEFAULT_SHEET_ENTRY ? 32 : 1,
+      frameIndex: 0,
+      fps: DEFAULT_FPS,
+      scale: 1,
+      playing: false,
+      lastTick: 0,
+      accumulator: 0,
+      rafId: 0,
+      fileBytes: 0,
+      currentPath: DEFAULT_SHEET
+    };
+
+    const canvas = document.getElementById("spriteCanvas");
+    const ctx = canvas.getContext("2d");
+    const viewport = document.getElementById("viewport");
+    const timeline = document.querySelector(".timeline");
+    const pinButton = document.getElementById("pinButton");
+    const playButton = document.getElementById("playButton");
+    const prevButton = document.getElementById("prevButton");
+    const nextButton = document.getElementById("nextButton");
+    const frameSlider = document.getElementById("frameSlider");
+    const frameReadout = document.getElementById("frameReadout");
+    const fpsRange = document.getElementById("fpsRange");
+    const fpsInput = document.getElementById("fpsInput");
+    const scaleRange = document.getElementById("scaleRange");
+    const scaleInput = document.getElementById("scaleInput");
+    const frameWidthInput = document.getElementById("frameWidthInput");
+    const frameHeightInput = document.getElementById("frameHeightInput");
+    const frameCountInput = document.getElementById("frameCountInput");
+    const sheetFileInput = document.getElementById("sheetFileInput");
+    const gameSelect = document.getElementById("gameSelect");
+    const characterRow = document.getElementById("characterRow");
+    const characterSelect = document.getElementById("characterSelect");
+    const animationSelect = document.getElementById("animationSelect");
+    const backgroundSelect = document.getElementById("backgroundSelect");
+    const warning = document.getElementById("warning");
+    const gallery = document.getElementById("gallery");
+    const pinnedGallery = document.getElementById("pinnedGallery");
+    const pinnedCount = document.getElementById("pinnedCount");
+    const sheetPath = document.getElementById("sheetPath");
+    const sheetSize = document.getElementById("sheetSize");
+    const frameSize = document.getElementById("frameSize");
+    const durationStat = document.getElementById("durationStat");
+    const fileSizeStat = document.getElementById("fileSizeStat");
+    const inferValue = document.getElementById("inferValue");
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function folderParts(sheet) {
+      const parts = String(sheet && sheet.path ? sheet.path : "").split("/");
+      const rootIndex = parts.indexOf("Final Sprite Sheets");
+      if (rootIndex < 0) {
+        return {
+          game: sheet && sheet.game ? sheet.game : "",
+          character: sheet && sheet.character ? sheet.character : "",
+          animation: sheet && sheet.animation ? sheet.animation : ""
+        };
+      }
+      return {
+        game: sheet.game || parts[rootIndex + 1] || "",
+        character: sheet.character || parts[rootIndex + 2] || "",
+        animation: sheet.animation || parts[rootIndex + 3] || ""
+      };
+    }
+
+    function sortText(values) {
+      return [...values].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+    }
+
+    function unique(values) {
+      return sortText(new Set(values.filter(Boolean)));
+    }
+
+    function normalizePinnedPaths(value) {
+      const source = Array.isArray(value) ? value : value && Array.isArray(value.pinned) ? value.pinned : [];
+      const seen = new Set();
+      const paths = [];
+      for (const item of source) {
+        const path = typeof item === "string" ? item : item && item.path;
+        if (!path || seen.has(path)) {
+          continue;
+        }
+        seen.add(path);
+        paths.push(path);
+      }
+      return paths;
+    }
+
+    function normalizeFps(value) {
+      const fps = Math.round(Number(value));
+      return clamp(Number.isFinite(fps) ? fps : DEFAULT_FPS, 1, 60);
+    }
+
+    function metadataPathForSheet(sheet) {
+      if (!sheet || !sheet.path) {
+        return "";
+      }
+      const parts = String(sheet.path).split("/");
+      const sheetsIndex = parts.lastIndexOf("sheets");
+      if (sheetsIndex < 1 || !parts.length) {
+        return "";
+      }
+      const filename = parts[parts.length - 1].replace(/\.(png|webp|jpe?g)$/i, ".metadata.json");
+      return [...parts.slice(0, sheetsIndex), "metadata", filename].join("/");
+    }
+
+    function normalizeSheetMetadataMap(value) {
+      const source = value && typeof value === "object" && !Array.isArray(value)
+        ? value.sheets && typeof value.sheets === "object" ? value.sheets : value
+        : {};
+      const result = {};
+      for (const [key, raw] of Object.entries(source)) {
+        const metadata = raw && typeof raw === "object" ? raw : { fps: raw };
+        const path = typeof metadata.path === "string" ? metadata.path : key;
+        if (!path) {
+          continue;
+        }
+        result[path] = {
+          ...metadata,
+          path,
+          fps: normalizeFps(metadata.fps)
+        };
+      }
+      return result;
+    }
+
+    function readStoredPinnedPaths() {
+      try {
+        return normalizePinnedPaths(JSON.parse(localStorage.getItem(PIN_STORAGE_KEY) || "[]"));
+      } catch {
+        return [];
+      }
+    }
+
+    function readStoredSheetMetadata() {
+      try {
+        return normalizeSheetMetadataMap(JSON.parse(localStorage.getItem(SHEET_METADATA_STORAGE_KEY) || "{}"));
+      } catch {
+        return {};
+      }
+    }
+
+    let pinnedPaths = readStoredPinnedPaths();
+    let sheetMetadata = readStoredSheetMetadata();
+    let metadataLoadToken = 0;
+
+    function savePinnedPaths() {
+      try {
+        localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify({ pinned: pinnedPaths }));
+      } catch {
+        setWarning("Pinned sheets could not be saved in this browser.");
+      }
+    }
+
+    function saveSheetMetadata() {
+      try {
+        localStorage.setItem(SHEET_METADATA_STORAGE_KEY, JSON.stringify({ sheets: sheetMetadata }));
+      } catch {
+        setWarning("Animation metadata could not be saved in this browser.");
+      }
+    }
+
+    function hasStoredPinnedPaths() {
+      try {
+        return localStorage.getItem(PIN_STORAGE_KEY) !== null;
+      } catch {
+        return true;
+      }
+    }
+
+    function sheetByPath(path) {
+      return SHEETS.find((sheet) => sheet.path === path) || null;
+    }
+
+    function currentSheet() {
+      return sheetByPath(state.currentPath);
+    }
+
+    function isPinned(path) {
+      return pinnedPaths.includes(path);
+    }
+
+    function pinnedSheets() {
+      return pinnedPaths.map(sheetByPath).filter(Boolean);
+    }
+
+    function metadataForSheet(sheet) {
+      return sheet && sheet.path ? sheetMetadata[sheet.path] || null : null;
+    }
+
+    function applySheetMetadata(metadata, sync = true) {
+      if (!metadata || metadata.fps === undefined) {
+        return false;
+      }
+      state.fps = normalizeFps(metadata.fps);
+      state.accumulator = 0;
+      if (sync) {
+        syncControls();
+      }
+      return true;
+    }
+
+    function persistCurrentFps() {
+      const sheet = currentSheet();
+      if (!sheet || !isPinned(sheet.path)) {
+        return;
+      }
+      sheetMetadata[sheet.path] = {
+        ...(sheetMetadata[sheet.path] || {}),
+        path: sheet.path,
+        fps: normalizeFps(state.fps),
+        metadataPath: metadataPathForSheet(sheet),
+        updatedAt: new Date().toISOString()
+      };
+      saveSheetMetadata();
+    }
+
+    function setFps(value, persist = false) {
+      state.fps = normalizeFps(value);
+      state.accumulator = 0;
+      if (persist) {
+        persistCurrentFps();
+      }
+      syncControls();
+    }
+
+    function loadSheetMetadataFromFile(sheet) {
+      metadataLoadToken += 1;
+      const token = metadataLoadToken;
+      if (!sheet || !sheet.path || !isPinned(sheet.path)) {
+        return;
+      }
+      const storedMetadata = metadataForSheet(sheet);
+      if (storedMetadata && applySheetMetadata(storedMetadata, false)) {
+        return;
+      }
+      const metadataPath = metadataPathForSheet(sheet);
+      if (!metadataPath) {
+        return;
+      }
+      const frame = document.createElement("iframe");
+      frame.hidden = true;
+      frame.src = metadataPath;
+      frame.addEventListener("load", () => {
+        try {
+          const text = frame.contentDocument && frame.contentDocument.body
+            ? frame.contentDocument.body.textContent
+            : "";
+          const metadata = normalizeSheetMetadataMap({ [sheet.path]: JSON.parse(text || "{}") })[sheet.path];
+          if (metadata) {
+            sheetMetadata[sheet.path] = {
+              ...metadata,
+              metadataPath
+            };
+            saveSheetMetadata();
+            if (token === metadataLoadToken && state.currentPath === sheet.path) {
+              applySheetMetadata(metadata);
+            }
+          }
+        } catch {
+          // Missing metadata files are fine; local browser metadata still works.
+        } finally {
+          frame.remove();
+        }
+      });
+      document.body.append(frame);
+    }
+
+    function latestSheets() {
+      return SHEETS.slice(0, LATEST_LIMIT);
+    }
+
+    function optionLabel(value) {
+      return value === LAST_GAME_VALUE ? "Last 10" : value;
+    }
+
+    function setWarning(message) {
+      warning.textContent = message;
+      warning.classList.toggle("visible", Boolean(message));
+    }
+
+    function inferFrameCount() {
+      if (!state.imageLoaded || state.frameWidth < 1) {
+        return state.frameCount;
+      }
+      const inferred = Math.max(1, Math.floor(state.image.naturalWidth / state.frameWidth));
+      inferValue.textContent = String(inferred);
+      return inferred;
+    }
+
+    function formatBytes(bytes) {
+      const value = Number(bytes);
+      if (!Number.isFinite(value) || value <= 0) {
+        return "unknown";
+      }
+      const units = ["B", "KB", "MB", "GB"];
+      let scaled = value;
+      let unitIndex = 0;
+      while (scaled >= 1024 && unitIndex < units.length - 1) {
+        scaled /= 1024;
+        unitIndex += 1;
+      }
+      const digits = scaled >= 100 || unitIndex === 0 ? 0 : 1;
+      return `${scaled.toFixed(digits)} ${units[unitIndex]}`;
+    }
+
+    function syncControls() {
+      fpsRange.value = String(state.fps);
+      fpsInput.value = String(state.fps);
+      scaleRange.value = String(state.scale);
+      scaleInput.value = String(state.scale);
+      frameWidthInput.value = String(state.frameWidth);
+      frameHeightInput.value = String(state.frameHeight);
+      frameCountInput.value = String(state.frameCount);
+      frameSlider.max = String(Math.max(0, state.frameCount - 1));
+      frameSlider.value = String(state.frameIndex);
+      frameReadout.textContent = `${state.frameIndex + 1} / ${state.frameCount}`;
+      sheetSize.textContent = state.imageLoaded
+        ? `${state.image.naturalWidth} x ${state.image.naturalHeight}`
+        : state.currentPath ? "loading" : "none";
+      frameSize.textContent = `${state.frameWidth} x ${state.frameHeight}`;
+      durationStat.textContent = `${(state.frameCount / state.fps).toFixed(2)}s`;
+      fileSizeStat.textContent = formatBytes(state.fileBytes);
+      playButton.textContent = state.playing ? "⏸" : "▶";
+      syncPinButton();
+    }
+
+    function resizeCanvas() {
+      const width = Math.max(1, Math.round(state.frameWidth * state.scale));
+      const height = Math.max(1, Math.round(state.frameHeight * state.scale));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+    }
+
+    function draw() {
+      resizeCanvas();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!state.imageLoaded) {
+        return;
+      }
+      const sx = state.frameIndex * state.frameWidth;
+      if (sx + state.frameWidth > state.image.naturalWidth) {
+        setWarning("Frame settings extend past the sheet width.");
+        return;
+      }
+      setWarning("");
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        state.image,
+        sx,
+        0,
+        state.frameWidth,
+        state.frameHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    }
+
+    function setFrame(index) {
+      state.frameIndex = clamp(index, 0, state.frameCount - 1);
+      syncControls();
+      draw();
+    }
+
+    function step(delta) {
+      setFrame((state.frameIndex + delta + state.frameCount) % state.frameCount);
+    }
+
+    function frameIndexFromPointer(event) {
+      const rect = frameSlider.getBoundingClientRect();
+      if (rect.width <= 0) {
+        return state.frameIndex;
+      }
+      const progress = clamp((event.clientX - rect.left) / rect.width, 0, 1);
+      return Math.round(progress * Math.max(0, state.frameCount - 1));
+    }
+
+    function scrubFrameFromPointer(event) {
+      setPlaying(false);
+      setFrame(frameIndexFromPointer(event));
+    }
+
+    function animationLoop(timestamp) {
+      if (!state.playing) {
+        return;
+      }
+      if (!state.lastTick) {
+        state.lastTick = timestamp;
+      }
+      const delta = timestamp - state.lastTick;
+      state.lastTick = timestamp;
+      state.accumulator += delta;
+      const frameMs = 1000 / state.fps;
+      while (state.accumulator >= frameMs) {
+        state.frameIndex = (state.frameIndex + 1) % state.frameCount;
+        state.accumulator -= frameMs;
+      }
+      syncControls();
+      draw();
+      state.rafId = requestAnimationFrame(animationLoop);
+    }
+
+    function setPlaying(playing) {
+      state.playing = playing;
+      state.lastTick = 0;
+      state.accumulator = 0;
+      cancelAnimationFrame(state.rafId);
+      syncControls();
+      if (playing) {
+        state.rafId = requestAnimationFrame(animationLoop);
+      }
+    }
+
+    function updateFrameSettings() {
+      state.frameWidth = Math.max(1, Number(frameWidthInput.value) || 256);
+      state.frameHeight = Math.max(1, Number(frameHeightInput.value) || 256);
+      state.frameCount = Math.max(1, Number(frameCountInput.value) || inferFrameCount());
+      state.frameIndex = clamp(state.frameIndex, 0, state.frameCount - 1);
+      syncControls();
+      draw();
+    }
+
+    function applySheetDimensions(sheet) {
+      if (!sheet || !sheet.width || !sheet.height) {
+        return false;
+      }
+      const sheetWidth = Number(sheet.width);
+      const sheetHeight = Number(sheet.height);
+      if (!Number.isFinite(sheetWidth) || !Number.isFinite(sheetHeight) || sheetHeight < 1) {
+        return false;
+      }
+      state.frameWidth = sheetHeight;
+      state.frameHeight = sheetHeight;
+      state.frameCount = Math.max(1, Math.floor(sheetWidth / sheetHeight));
+      inferValue.textContent = String(state.frameCount);
+      return true;
+    }
+
+    function updateGallerySelection() {
+      for (const item of document.querySelectorAll(".gallery-item")) {
+        item.classList.toggle("active", item.dataset.path === state.currentPath);
+      }
+    }
+
+    function createGalleryItem(sheet) {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "gallery-item";
+      item.dataset.path = sheet.path;
+      item.title = sheet.path;
+      item.setAttribute("aria-label", sheet.label || sheet.path);
+
+      const thumb = document.createElement("div");
+      thumb.className = "gallery-thumb";
+      thumb.style.backgroundImage = `url("${sheet.path.replace(/"/g, "%22")}")`;
+
+      item.append(thumb);
+      item.addEventListener("click", () => loadImage(sheet.path, sheet.path, sheet));
+      return item;
+    }
+
+    function renderSheetGallery(container, sheets, emptyText) {
+      container.innerHTML = "";
+      if (!sheets.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-gallery";
+        empty.textContent = emptyText;
+        container.append(empty);
+        return;
+      }
+      for (const sheet of sheets) {
+        container.append(createGalleryItem(sheet));
+      }
+      updateGallerySelection();
+    }
+
+    function renderPinnedGallery() {
+      const sheets = pinnedSheets();
+      pinnedCount.textContent = String(sheets.length);
+      renderSheetGallery(pinnedGallery, sheets, "No pinned sheets");
+    }
+
+    function renderGallery() {
+      if (!SHEETS.length) {
+        renderSheetGallery(pinnedGallery, [], "No pinned sheets");
+        renderSheetGallery(gallery, [], "No sheet entries");
+        return;
+      }
+      renderPinnedGallery();
+      renderSheetGallery(gallery, latestSheets(), "No recent sheets");
+    }
+
+    function syncPinButton() {
+      const sheet = currentSheet();
+      const pinned = Boolean(sheet && isPinned(sheet.path));
+      pinButton.disabled = !sheet;
+      pinButton.textContent = pinned ? "★" : "☆";
+      pinButton.classList.toggle("pinned", pinned);
+      pinButton.setAttribute("aria-pressed", pinned ? "true" : "false");
+      pinButton.title = pinned ? "Unpin sheet" : "Pin sheet";
+      pinButton.setAttribute("aria-label", pinned ? "Unpin sheet" : "Pin sheet");
+    }
+
+    function toggleCurrentPin() {
+      const sheet = currentSheet();
+      if (!sheet) {
+        return;
+      }
+      const wasPinned = isPinned(sheet.path);
+      if (wasPinned) {
+        pinnedPaths = pinnedPaths.filter((path) => path !== sheet.path);
+      } else {
+        pinnedPaths = [sheet.path, ...pinnedPaths.filter((path) => path !== sheet.path)];
+      }
+      savePinnedPaths();
+      if (!wasPinned) {
+        persistCurrentFps();
+        loadSheetMetadataFromFile(sheet);
+      }
+      renderPinnedGallery();
+      syncPinButton();
+      updateGallerySelection();
+    }
+
+    function loadPinsFromJsonFile() {
+      if (hasStoredPinnedPaths()) {
+        return;
+      }
+      const frame = document.createElement("iframe");
+      frame.hidden = true;
+      frame.src = PINNED_JSON_PATH;
+      frame.addEventListener("load", () => {
+        try {
+          const text = frame.contentDocument && frame.contentDocument.body
+            ? frame.contentDocument.body.textContent
+            : "";
+          const paths = normalizePinnedPaths(JSON.parse(text || "{}"));
+          if (paths.length) {
+            pinnedPaths = paths;
+            renderPinnedGallery();
+            syncPinButton();
+            loadSheetMetadataFromFile(currentSheet());
+          }
+        } catch {
+          // A missing or unreadable JSON file should not block the viewer.
+        } finally {
+          frame.remove();
+        }
+      });
+      document.body.append(frame);
+    }
+
+    function setOptions(select, values, selectedValue) {
+      select.innerHTML = "";
+      for (const value of values) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = optionLabel(value);
+        select.append(option);
+      }
+      select.disabled = values.length === 0;
+      if (values.includes(selectedValue)) {
+        select.value = selectedValue;
+      } else if (values.length) {
+        select.value = values[0];
+      }
+    }
+
+    function sheetLabel(sheet, includeContext = false) {
+      const frameCount = sheet.height ? Math.floor(Number(sheet.width) / Number(sheet.height)) : 0;
+      const name = includeContext
+        ? [sheet.character, sheet.animation].filter(Boolean).join(" / ")
+        : sheet.animation || sheet.label || sheet.path;
+      const parts = [name || sheet.label || sheet.path];
+      if (frameCount > 0) {
+        parts.push(`${frameCount}f`);
+      }
+      if (sheet.bytes) {
+        parts.push(formatBytes(sheet.bytes));
+      }
+      return parts.join(" · ");
+    }
+
+    function selectedSheets() {
+      if (gameSelect.value === LAST_GAME_VALUE) {
+        return latestSheets();
+      }
+      return sheetsFor(gameSelect.value, characterSelect.value);
+    }
+
+    function sheetsFor(game, character) {
+      return SHEETS
+        .filter((sheet) => sheet.game === game && sheet.character === character)
+        .sort((a, b) => {
+          const anim = String(a.animation || "").localeCompare(String(b.animation || ""), undefined, { numeric: true, sensitivity: "base" });
+          if (anim !== 0) {
+            return anim;
+          }
+          return Number(a.width || 0) - Number(b.width || 0);
+        });
+    }
+
+    function populateAnimationOptions(selectedPath = "") {
+      const isLatest = gameSelect.value === LAST_GAME_VALUE;
+      const sheets = selectedSheets();
+      animationSelect.innerHTML = "";
+      for (const sheet of sheets) {
+        const option = document.createElement("option");
+        option.value = sheet.path;
+        option.textContent = sheetLabel(sheet, isLatest);
+        animationSelect.append(option);
+      }
+      animationSelect.disabled = sheets.length === 0;
+      if (sheets.some((sheet) => sheet.path === selectedPath)) {
+        animationSelect.value = selectedPath;
+      } else if (sheets.length) {
+        animationSelect.value = sheets[0].path;
+      }
+    }
+
+    function populateCharacterOptions(selectedCharacter = "") {
+      const isLatest = gameSelect.value === LAST_GAME_VALUE;
+      characterRow.hidden = isLatest;
+      characterSelect.disabled = isLatest;
+      if (isLatest) {
+        characterSelect.innerHTML = "";
+        populateAnimationOptions();
+        return;
+      }
+      const characters = unique(SHEETS.filter((sheet) => sheet.game === gameSelect.value).map((sheet) => sheet.character));
+      setOptions(characterSelect, characters, selectedCharacter);
+      populateAnimationOptions();
+    }
+
+    function populateGameOptions(selectedGame = "") {
+      const games = [LAST_GAME_VALUE, ...unique(SHEETS.map((sheet) => sheet.game))];
+      setOptions(gameSelect, games, selectedGame || LAST_GAME_VALUE);
+      populateCharacterOptions();
+    }
+
+    function syncLibrarySelection(sheet) {
+      if (!sheet) {
+        return;
+      }
+      if (gameSelect.value === LAST_GAME_VALUE && latestSheets().some((latest) => latest.path === sheet.path)) {
+        populateGameOptions(LAST_GAME_VALUE);
+        populateAnimationOptions(sheet.path);
+        return;
+      }
+      if (!sheet.game || !sheet.character) {
+        return;
+      }
+      populateGameOptions(sheet.game);
+      populateCharacterOptions(sheet.character);
+      populateAnimationOptions(sheet.path);
+    }
+
+    function selectedBrowserSheet() {
+      return SHEETS.find((sheet) => sheet.path === animationSelect.value) || null;
+    }
+
+    function loadSelectedBrowserSheet() {
+      const sheet = selectedBrowserSheet();
+      if (sheet) {
+        loadImage(sheet.path, sheet.path, sheet);
+      }
+    }
+
+    function loadImage(src, label, sheet = null) {
+      const resumePlaying = state.playing;
+      setPlaying(false);
+      state.imageLoaded = false;
+      state.currentPath = src;
+      state.fileBytes = sheet && sheet.bytes ? Number(sheet.bytes) : 0;
+      applySheetMetadata(metadataForSheet(sheet), false);
+      loadSheetMetadataFromFile(sheet);
+      sheetPath.textContent = label;
+      updateGallerySelection();
+      syncLibrarySelection(sheet);
+      state.image = new Image();
+      state.image.onload = () => {
+        state.imageLoaded = true;
+        if (!applySheetDimensions(sheet)) {
+          state.frameCount = inferFrameCount();
+        }
+        state.frameIndex = 0;
+        syncControls();
+        draw();
+        if (resumePlaying) {
+          setPlaying(true);
+        }
+      };
+      state.image.onerror = () => {
+        setWarning("Could not load the sprite sheet image.");
+        syncControls();
+      };
+      state.image.src = src;
+    }
+
+    pinButton.addEventListener("click", toggleCurrentPin);
+    playButton.addEventListener("click", () => setPlaying(!state.playing));
+    prevButton.addEventListener("click", () => step(-1));
+    nextButton.addEventListener("click", () => step(1));
+
+    frameSlider.addEventListener("input", () => {
+      const nextFrame = Number(frameSlider.value);
+      setPlaying(false);
+      setFrame(nextFrame);
+    });
+
+    let isScrubbingFrame = false;
+
+    timeline.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 || frameReadout.contains(event.target)) {
+        return;
+      }
+      isScrubbingFrame = true;
+      timeline.setPointerCapture(event.pointerId);
+      scrubFrameFromPointer(event);
+    });
+
+    timeline.addEventListener("pointermove", (event) => {
+      if (!isScrubbingFrame) {
+        return;
+      }
+      scrubFrameFromPointer(event);
+    });
+
+    function finishFrameScrub(event) {
+      if (!isScrubbingFrame) {
+        return;
+      }
+      isScrubbingFrame = false;
+      if (timeline.hasPointerCapture(event.pointerId)) {
+        timeline.releasePointerCapture(event.pointerId);
+      }
+    }
+
+    timeline.addEventListener("pointerup", finishFrameScrub);
+    timeline.addEventListener("pointercancel", finishFrameScrub);
+
+    fpsRange.addEventListener("input", () => {
+      setFps(fpsRange.value, true);
+    });
+
+    fpsInput.addEventListener("input", () => {
+      setFps(fpsInput.value, true);
+    });
+
+    scaleRange.addEventListener("input", () => {
+      state.scale = Math.max(0.25, Number(scaleRange.value));
+      syncControls();
+      draw();
+    });
+
+    scaleInput.addEventListener("input", () => {
+      state.scale = Math.max(0.25, Number(scaleInput.value) || 1);
+      syncControls();
+      draw();
+    });
+
+    frameWidthInput.addEventListener("input", updateFrameSettings);
+    frameHeightInput.addEventListener("input", updateFrameSettings);
+    frameCountInput.addEventListener("input", updateFrameSettings);
+
+    backgroundSelect.addEventListener("change", () => {
+      viewport.style.backgroundColor = backgroundSelect.value === "light" ? "#eceae5" : backgroundSelect.value === "dark" ? "#111316" : "var(--canvas-bg)";
+      viewport.style.backgroundImage = backgroundSelect.value === "checker" ? "" : "none";
+    });
+
+    gameSelect.addEventListener("change", () => {
+      populateCharacterOptions();
+      loadSelectedBrowserSheet();
+    });
+
+    characterSelect.addEventListener("change", () => {
+      populateAnimationOptions();
+      loadSelectedBrowserSheet();
+    });
+
+    animationSelect.addEventListener("change", loadSelectedBrowserSheet);
+
+    sheetFileInput.addEventListener("change", () => {
+      const file = sheetFileInput.files && sheetFileInput.files[0];
+      if (!file) {
+        return;
+      }
+      const objectUrl = URL.createObjectURL(file);
+      state.currentPath = "";
+      loadImage(objectUrl, file.name, { bytes: file.size });
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
+        return;
+      }
+      if (event.key === " ") {
+        event.preventDefault();
+        setPlaying(!state.playing);
+      } else if (event.key === "ArrowLeft") {
+        step(-1);
+      } else if (event.key === "ArrowRight") {
+        step(1);
+      }
+    });
+
+    syncControls();
+    renderGallery();
+    loadPinsFromJsonFile();
+    populateGameOptions(LAST_GAME_VALUE);
+    if (DEFAULT_SHEET_ENTRY) {
+      loadImage(DEFAULT_SHEET, DEFAULT_SHEET, DEFAULT_SHEET_ENTRY);
+    } else {
+      sheetPath.textContent = "No sheet loaded";
+      setWarning("Add sheets to Final Sprite Sheets and rebuild the manifest, or choose a local sheet file.");
+      draw();
+    }
+  </script>
+</body>
+</html>

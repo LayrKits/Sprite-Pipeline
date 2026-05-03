@@ -1,0 +1,38 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+
+# Generated or project-specific inputs and outputs.
+Videos/**
+work/**
+Final Sprite Sheets/**
+Cleanup/**
+
+# Keep the intended repo skeleton.
+!Videos/
+!Videos/.gitkeep
+!Videos/To Be Processed/
+!Videos/To Be Processed/.gitkeep
+!Videos/Processed/
+!Videos/Processed/.gitkeep
+!work/
+!work/.gitkeep
+!work/extracted/
+!work/extracted/.gitkeep
+!work/matted/
+!work/matted/.gitkeep
+!work/frames/
+!work/frames/.gitkeep
+!work/sheets/
+!work/sheets/.gitkeep
+!work/previews/
+!work/previews/.gitkeep
+!work/reports/
+!work/reports/.gitkeep
+!work/contact_sheets/
+!work/contact_sheets/.gitkeep
+!Final Sprite Sheets/
+!Final Sprite Sheets/.gitkeep
+!Cleanup/
+!Cleanup/.gitkeep
