@@ -49,7 +49,9 @@ The frame extraction step should produce:
 - one image per intended animation frame
 - filenames that sort in playback order
 - transparent PNGs when possible
-- otherwise, frames on a perfectly flat chroma background such as `#00ff00`
+- otherwise, frames on a perfectly flat chroma background such as `#00ff00`;
+  the pipeline defaults to green but accepts another exact key color with
+  `--background-color`
 - full character, weapon, cloth, and effects visible in every frame
 - the same source canvas for every frame after watermark removal
 - no important pixels touching the source frame edge
@@ -135,7 +137,9 @@ python tools/animation_pipeline.py \
   --frame-prefix hero_run
 ```
 
-Use `--background-mode chroma` when frames have a flat key color.
+Use `--background-mode chroma` when frames have a flat key color. The default
+key is `#00ff00`; pass `--background-color` for intentional non-green keys such
+as magenta.
 
 ```bash
 python tools/animation_pipeline.py \
@@ -143,7 +147,7 @@ python tools/animation_pipeline.py \
   --frames 16 \
   --background-mode chroma \
   --layout-mode preserve-canvas \
-  --key "#00ff00" \
+  --background-color "#00ff00" \
   --output work/sheets/hero/jump/hero_jump_16f_256.png \
   --preview work/previews/hero_jump_16f_preview.png \
   --frames-dir work/frames/hero/jump_16f_256 \
@@ -194,6 +198,22 @@ Promote only after:
   or watermark crop
 - adjacent-frame warnings have been visually reviewed
 - the frame count and timing are reflected in the consuming game
+
+For vertical-alignment outputs, the candidate review page is the approval gate.
+Open it through the server-hosted sprite viewer whenever the alignment workflow
+runs, ask the user to pick the candidate, and ask whether any fixes are still
+needed before promotion. The hosted review must show each method as a playing
+animation with guide lines. Candidate generation writes two sheet sets: immutable
+method candidates for detailed review, and matching `working_copies/` sheets for
+user edits. Manual frame nudges save only into the working copy. Restore resets
+the working copy from the immutable candidate. Finalize opens the working copy
+in the sprite viewer. Attempt automatic cleanup aligns the selected method's
+detected frame bottoms to the fixed ground guide line, writes the result to the
+working copy, and leaves Restore available if the result is too aggressive. If
+fixes are needed, make them as an explicit new candidate, use the hosted
+review's manual per-frame save flow, or rerun the alignment workflow and return
+to the candidate review gate. Do not add a second review stage for minor frame
+nudges.
 
 ## Validation Rules
 

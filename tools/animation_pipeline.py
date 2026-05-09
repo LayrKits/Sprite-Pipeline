@@ -19,7 +19,7 @@ here before promotion into a game.
 Supported source layouts:
 - frame directory: numbered PNG/JPEG/WebP frames extracted from video and sorted
   by filename.
-- components: separated foreground poses on flat #00ff00, sorted by x or
+- components: separated foreground poses on a flat chroma key, sorted by x or
   row-major if an old generated source returned multiple rows.
 - grid: fixed row/column guide layouts, useful when dust, wind, or magic effects
   are disconnected from the character and would confuse component extraction.
@@ -27,7 +27,7 @@ Supported source layouts:
   sheet, which is useful for external sprite sheets such as 8x8 atlases.
 - equal: last-resort slicing for truly guaranteed horizontal cells.
 
-The pipeline removes chroma and magenta guide pixels, despills green edges while
+The pipeline removes the configured chroma key and magenta guide pixels, despills green edges while
 preserving turquoise staff caps, removes tiny noise, then writes either a
 preserved source-canvas 256px cell or a foreground-fitted 256px cell. Preserved
 canvas layout is the normal video workflow: it scales the full extracted video
@@ -47,6 +47,7 @@ TOP_MARGIN = 2
 BOTTOM_MARGIN = 2
 MIN_COMPONENT_AREA = 32
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
+DEFAULT_CHROMA_KEY = "#00ff00"
 
 
 def natural_sort_key(path: Path) -> list[tuple[int, object]]:
@@ -86,10 +87,24 @@ def is_chroma(rgb: tuple[int, int, int], key: tuple[int, int, int], tolerance: i
     r, g, b = rgb
     if color_distance(rgb, key) <= tolerance:
         return True
+
     key_is_green = key[1] > 200 and key[0] < 80 and key[2] < 80
     if key_is_green:
         return g >= 170 and r <= 120 and b <= 130 and g >= r + 70 and g >= b + 55
-    return False
+
+    key_high_channels = [index for index, value in enumerate(key) if value >= 170]
+    key_low_channels = [index for index, value in enumerate(key) if value <= 120]
+    if not key_high_channels or not key_low_channels:
+        return False
+
+    channels = (r, g, b)
+    high_floor = max(130, min(key[index] for index in key_high_channels) - tolerance)
+    low_ceiling = min(180, max(key[index] for index in key_low_channels) + tolerance)
+    high_values = [channels[index] for index in key_high_channels]
+    low_values = [channels[index] for index in key_low_channels]
+    if min(high_values) < high_floor or max(low_values) > low_ceiling:
+        return False
+    return min(high_values) >= max(low_values) + max(45, tolerance // 2)
 
 
 def is_layout_guide(rgb: tuple[int, int, int]) -> bool:
@@ -97,7 +112,12 @@ def is_layout_guide(rgb: tuple[int, int, int]) -> bool:
     return r >= 190 and b >= 190 and g <= 90
 
 
-def remove_chroma_background(img: Image.Image, key: tuple[int, int, int], tolerance: int) -> Image.Image:
+def remove_chroma_background(
+    img: Image.Image,
+    key: tuple[int, int, int],
+    tolerance: int,
+    remove_layout_guides: bool,
+) -> Image.Image:
     rgba = img.convert("RGBA")
     px = rgba.load()
     width, height = rgba.size
@@ -106,10 +126,10 @@ def remove_chroma_background(img: Image.Image, key: tuple[int, int, int], tolera
             r, g, b, a = px[x, y]
             if a == 0:
                 continue
-            if is_chroma((r, g, b), key, tolerance) or is_layout_guide((r, g, b)):
+            if is_chroma((r, g, b), key, tolerance) or (remove_layout_guides and is_layout_guide((r, g, b))):
                 px[x, y] = (0, 0, 0, 0)
                 continue
-            # Soft despill for chroma-edge pixels without eating cyan staff tips.
+            # Soft despill for green chroma-edge pixels without eating cyan staff tips.
             if key[1] > 200 and g > r + 35 and g > b + 18 and r < 150 and b < 180:
                 px[x, y] = (r, min(g, max(r, b) + 24), b, a)
     return rgba
@@ -120,10 +140,11 @@ def clean_source_image(
     background_mode: str,
     key: tuple[int, int, int],
     tolerance: int,
+    remove_layout_guides: bool = False,
 ) -> Image.Image:
     if background_mode == "alpha":
         return img.convert("RGBA")
-    return remove_chroma_background(img, key, tolerance)
+    return remove_chroma_background(img, key, tolerance, remove_layout_guides)
 
 
 def component_bboxes(img: Image.Image) -> list[dict[str, object]]:
@@ -436,8 +457,8 @@ def layout_canvas_frames(cells: list[Image.Image]) -> tuple[list[Image.Image], l
     scale = min(FRAME_SIZE / max(1, canvas_width), FRAME_SIZE / max(1, canvas_height))
     scaled_width = max(1, round(canvas_width * scale))
     scaled_height = max(1, round(canvas_height * scale))
-    paste_x = 0
-    paste_y = 0
+    paste_x = (FRAME_SIZE - scaled_width) // 2
+    paste_y = (FRAME_SIZE - scaled_height) // 2
 
     frames: list[Image.Image] = []
     records: list[dict[str, object]] = []
@@ -570,7 +591,13 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         if args.frames is not None and len(paths) != args.frames:
             raise ValueError(f"Expected {args.frames} source frames, found {len(paths)} in {source}")
         cells = [
-            clean_source_image(Image.open(path), args.background_mode, key, args.tolerance)
+            clean_source_image(
+                Image.open(path),
+                args.background_mode,
+                key,
+                args.tolerance,
+                remove_layout_guides=False,
+            )
             for path in paths
         ]
         frame_count = len(cells)
@@ -585,7 +612,13 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         frame_count = args.frames
         source = Path(args.source)
         img = Image.open(source).convert("RGBA")
-        cleaned = clean_source_image(img, args.background_mode, key, args.tolerance)
+        cleaned = clean_source_image(
+            img,
+            args.background_mode,
+            key,
+            args.tolerance,
+            remove_layout_guides=True,
+        )
         if args.split_mode == "components":
             cells = split_component_cells(
                 cleaned,
@@ -645,6 +678,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             "split_mode": "frames" if source_type == "frame-directory" else args.split_mode,
             "source_type": source_type,
             "background_mode": args.background_mode,
+            "chroma_key": args.key,
             "anchor_mode": args.anchor_mode,
             "layout_mode": args.layout_mode,
             "source_cells": source_cells,
@@ -673,7 +707,14 @@ def main() -> None:
         default="preserve-canvas",
         help="preserve-canvas keeps the full source video frame scale; fit-foreground recenters and grounds the visible sprite.",
     )
-    parser.add_argument("--key", default="#00ff00")
+    parser.add_argument(
+        "--key",
+        "--chroma-key",
+        "--background-color",
+        dest="key",
+        default=DEFAULT_CHROMA_KEY,
+        help=f"Flat chroma-key color to remove in chroma mode. Defaults to {DEFAULT_CHROMA_KEY}.",
+    )
     parser.add_argument("--tolerance", type=int, default=70)
     parser.add_argument("--split-mode", choices=("components", "equal", "grid"), default="components")
     parser.add_argument("--grid-cols", type=int, default=1)

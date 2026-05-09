@@ -1,111 +1,106 @@
 # Prompting Video Models
 
-Use this reference when animating an image-model pose into source footage for frame extraction. The output is controlled sprite-pipeline footage, not cinematic video.
+Use this reference for image-to-video prompts that become sprite-sheet source
+footage. The output is controlled 2D game animation, not cinematic video.
 
-Kling is the main target, but the same constraints apply to other image-to-video models.
+## Budget Contract
 
-## Core Prompt Rules
+For Seedance and other 3000-character prompt fields, split the prompt into:
 
-Use the image-model result as the first frame. The video prompt must be strict and mechanical.
+- control block: 2500 characters or less, including labels and newlines
+- motion block: 500 characters or less, including its label
 
-Always include:
+The control block carries reusable rules: exact first frame, production context,
+registration anchor, camera, background, identity, framing, and failures. The
+motion block only describes the visible action.
 
-- use uploaded image as exact first frame
-- preserve exact character design, outfit, proportions, weapon, silhouette, and 2D art style
-- locked camera
-- no zoom, no pan, no rotation, no cuts
-- character always centered in frame
-- full body, weapon, and all motion fully inside the frame at all times
-- no horizontal travel across the screen
-- maintain flat chroma green background `#00FF00` with no variation
-- no shadows on the ground or background
-- no lighting changes or gradients
-- no motion blur
+If over budget, cut motion detail and long identity lists before cutting the
+registration, camera, background, or edge-framing rules.
 
-Kling tends to drift toward cinematic motion, interpolation shortcuts, and pretty effects. Pull it back toward deterministic motion, sprite readability, and clean frame extraction.
-
-## Animation Constraints
-
-Require motion readable in approximately 12-24 frames:
-
-- each phase is clearly visible: anticipation, action, follow-through, recovery
-- no frame skipping
-- no pose snapping
-- no teleporting between poses
-- each frame shows visible progression from the previous frame
-- motion stays compact and contained within the frame
-
-Always describe the animation as a step-by-step mechanical sequence, not as a vague action.
-
-Bad:
-
-```text
-fast overhead sword slash
-```
-
-Good:
-
-```text
-Use the uploaded image as the exact first frame. Slight weight shift. Arms raise weapon overhead. Brief anticipation pause. Forward step. Downward strike. Follow-through. Return to ready stance.
-```
-
-If using a transition frame, reference the uploaded image as the starting pose rather than saying "start from idle stance".
-
-## Character Control Constraints
+## Core Rules
 
 Always include:
 
-- do not change anatomy or proportions
-- do not add or remove limbs
-- do not duplicate weapons or hands
-- do not warp hands or fingers
-- do not change costume or accessories
-- weapon remains consistent in position, ownership, and orientation unless switching hands is intentional
+- uploaded image is the exact first frame
+- footage is for 2D game animation, not cinematic video
+- game engine handles movement; video shows pose animation only
+- fixed invisible registration anchor, usually belt, pelvis, torso core, chest
+  core, or root of body mass
+- anchor stays locked to the same screen-space point every frame
+- model must not center on weapons, cloth, hair, effects, hands, feet, or bbox
+  extremes
+- locked camera and same on-screen size
+- flat exact chroma matte background, usually `#00FF00`
+- full body, weapons, cloth, hair, and effects inside frame
+- identity, outfit, anatomy, equipment, silhouette, and 2D style preserved
+- direct "do not" failure conditions
 
-## Style Constraints
+## Template
 
-Always include:
-
-- maintain 2D sprite readability
-- prioritize clear silhouette over realism
-- avoid cinematic effects
-- avoid depth of field
-- avoid particle spam that obscures the character
-
-Non-vertical effects are usually safer than vertical effects. A magic trail during an attack is less likely to cause character drift than landing dust or takeoff wind.
-
-For vertical animations like jump, fall, and landing, generate clean body motion first. Add landing dust, takeoff wind, or other vertical effects separately as their own overlay/effect animation.
-
-## Video Prompt Template
+Copy this full prompt and replace bracketed placeholders. The first block must
+stay at or below 2500 characters. The motion block must stay at or below 500.
 
 ```text
-Use the uploaded image as the exact first frame.
+<control>
+Generate a [DURATION]s image-to-video animation from the uploaded [SUBJECT] image. Use it as the exact first frame. [FINAL_FRAME_RULE]
 
-Preserve the exact character design, outfit, proportions, weapon, silhouette, and 2D art style. Locked camera. No zoom, no pan, no rotation, no cuts, no camera shake. Character remains centered in frame. Full body, full weapon, hair, cape, cloth, and all motion stay fully inside the frame at all times. No horizontal travel across the screen.
+This is 2D game sprite footage, not cinematic video. The game engine handles movement, so animate pose changes only. [ACTION_CONTEXT]
 
-Maintain a flat exact chroma green background: #00FF00, RGB 0,255,0. No background variation, no gradients, no floor, no shadows, no lighting changes, no motion blur.
+Fixed registration: choose [CORE_ANCHOR] in the first frame as an invisible anchor. Keep that exact body point locked to [TARGET_POSITION] for every frame, like onion-skin frames with the core lined up. The body may squash, stretch, bend, and pose around this fixed point, but the whole character must not slide, drift, rise, fall, or recenter. Do not center on [PROP_OR_EXTREMES], hair, cloth, cape, effects, hands, feet, or silhouette extremes. Do not draw guides, markers, grids, or anchor points.
 
-Animation sequence:
-1. [anticipation step]
-2. [main action step]
-3. [follow-through step]
-4. [recovery or return-to-ready step]
+Locked camera. No zoom, pan, rotation, cuts, shake, dolly, parallax, tracking, depth drift, scale change, or apparent camera movement. Same on-screen size.
 
-Motion must be readable in approximately 12-24 frames. Each frame should show clear progression from the previous frame. No frame skipping, no pose snapping, no teleporting.
+Background: flat chroma matte only, a pure color plate, not a room, floor, sky, wall, or environment. Every uncovered background pixel remains exact [KEY_HEX]. No gradients, texture, noise, shadows, floor, glow, dust, lighting shifts, or moving background pixels.
 
-Do not change anatomy or proportions. Do not add or remove limbs. Do not duplicate weapons or hands. Do not warp hands or fingers. Do not change costume or accessories. Keep the weapon consistent.
+Preserve exact [CHARACTER_IDENTITY]. Preserve [ART_STYLE]. Keep original facing direction: [FACING_DIRECTION]. Do not rotate, yaw, flip, mirror, or turn toward/away from camera.
 
-Maintain 2D sprite readability and a clean silhouette. Avoid cinematic effects, depth of field, particle spam, extra props, text, watermark, and extra characters.
+Keep [VISIBLE_PARTS] fully inside frame with [SAFETY_MARGIN]. Nothing touches any edge. [ACTION_FRAMING_LIMITS]
+
+Do not crop [CROP_RISKS]. Do not move the character around the canvas. Do not change the background. No floor, shadows, dust, text, props, extra characters, motion blur, glowing eyes, warped hands, missing limbs, extra fingers, duplicated hands or weapons, broken equipment, redesign, camera motion, or scale drift. [ACTION_FAILURES]
+</control>
+
+<motion>
+[MOTION_DESCRIPTION_IN_500_CHARS_OR_LESS]
+</motion>
 ```
 
-## Final Frame And Bridge Frames
+## Example
 
-Using the same image as both first and final video frame can occasionally produce a still video. If that happens, skip the final-frame input and choose a good ending frame from the generated video instead.
+Control block:
 
-If the final pose is good but does not connect well back to idle or into the next animation, use image generation to create one or a few bridge frames. This is often cheaper than rerunning video.
+```text
+<control>
+Generate a 5s image-to-video animation from the uploaded monk warrior green-screen image. Use it as the exact first frame. Final frame returns to standing guard.
+
+This is 2D game sprite footage, not cinematic video. The game engine handles movement, so animate pose changes only. Make a contained low hop, not a high jump.
+
+Fixed registration: choose the belt / pelvis / torso-core point in the first frame as an invisible anchor. Keep that exact body point locked to the exact frame center for every frame, like onion-skin frames with the core lined up. The body may squash, stretch, bend, and pose around this fixed point, but the whole character must not slide, drift, rise, fall, or recenter. Do not center on the quarterstaff, scarf, sash, cloth tips, hands, feet, or silhouette extremes. Do not draw guides, markers, grids, or anchor points.
+
+Locked camera. No zoom, pan, rotation, cuts, shake, dolly, parallax, tracking, depth drift, scale change, or apparent camera movement. Same on-screen size.
+
+Background: flat chroma matte only, a pure color plate, not a room, floor, sky, wall, or environment. Every uncovered background pixel remains exact #00FF00. No gradients, texture, noise, shadows, floor, glow, dust, lighting shifts, or moving background pixels.
+
+Preserve exact monk warrior: bald head, black beard, stern face, muscular body, shoulder guard, blue scarf, purple sash, navy pants, sandals, wraps, pendant, wooden quarterstaff. Preserve 2D game-art style, thick outlines, flat cel shading, colors, proportions, hands, outfit, and staff design. Keep original three-quarter side-facing direction toward screen right. Do not rotate, yaw, flip, mirror, or turn toward/away from camera.
+
+Keep full body, full quarterstaff, staff tips, fists, fingers, feet, scarf tips, sash tips, and cloth tips fully inside frame with clear green margin. Nothing touches any edge. Free fist never rises above the head. Scarf and sash trail sideways or downward.
+
+Do not crop body, fist, staff, feet, scarf, sash, or cloth. Do not move the character around the canvas. Do not change the background. No floor, shadows, dust, text, props, extra characters, motion blur, glowing eyes, warped hands, missing limbs, extra fingers, duplicated hands or weapons, broken staff, bent staff, redesign, camera motion, or scale drift.
+</control>
+```
+
+Motion block:
+
+```text
+<motion>
+0.0-0.7s prepare: knees bend, hips lower, torso leans, staff shifts toward one-hand control. 0.7-1.2s squash crouch, core fixed. 1.2-2.0s low launch pose only: modest stretch, one knee lifts, free arm near chest. 2.0-2.8s contained airborne pose, cloth follows. 2.8-3.4s prepare to land. 3.4-4.3s landing squash, no sliding feet. 4.3-5.0s recover to standing guard, staff two-hand diagonal.
+</motion>
+```
 
 ## Review Before Extraction
 
-Reject or rerun footage when the camera moves, the character travels across the screen, the green background changes, shadows appear, the weapon leaves frame, anatomy changes, hands duplicate, motion snaps, or effects obscure the silhouette.
-
-Prefer compact, readable motion over dramatic motion. The video is source material for a sprite pipeline.
+Before selecting sprite frames, create a source-timeline contact sheet. Reject or
+rerun footage when the camera moves, the registration anchor drifts, the
+character travels, the green background changes, shadows appear, important parts
+leave frame, anatomy changes, hands duplicate, motion snaps, or the generated
+timeline contains repeated phases, early landing poses, reversals, or timing
+pockets.

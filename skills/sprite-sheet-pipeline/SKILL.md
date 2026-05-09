@@ -37,12 +37,23 @@ For image-to-video, Kling, or source-footage animation prompts, read
 Default video-prompt goal:
 
 - uploaded image is the exact first frame
+- footage is for 2D game animation, not cinematic video
+- define an invisible core registration anchor, usually belt/pelvis/torso core
+- keep that body anchor locked to the same screen-space point
+- do not let the model center on weapon, cloth, hair, effects, or bounding-box extremes
 - locked camera with no zoom, pan, rotation, cuts, or shake
-- character remains centered with all motion inside frame
+- character remains registered/centered with all motion inside frame
 - no horizontal screen travel
 - flat exact `#00FF00` background with no variation
-- step-by-step motion readable in about 12-24 frames
+- timestamped step-by-step visible motion
 - preserve character design, anatomy, proportions, weapon, and 2D style
+
+For image-to-video jobs, use the context-engineered prompt pattern in
+`docs/reference/PROMPTING_VIDEO_MODELS.md`: task, production context, subject
+scope, fixed registration rule, chroma matte rule, locked camera rule,
+character preservation, facing/framing rules, timestamped timeline, and failure
+conditions. Keep the reusable non-motion control block at 2500 characters or
+less and the motion description at 500 characters or less, including labels.
 
 Return one copy-paste prompt by default. Include avoid/negative constraints
 inside that prompt unless the target tool explicitly has a separate negative

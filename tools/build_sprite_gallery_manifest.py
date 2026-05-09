@@ -42,8 +42,10 @@ def collect(root: Path, folders: list[Path]) -> list[dict[str, object]]:
         for path in sorted(folder.rglob("*"), key=natural_sort_key):
             if not path.is_file() or path.suffix.lower() not in IMAGE_EXTENSIONS:
                 continue
-            if folder.name == "Final Sprite Sheets" and "frames" in path.relative_to(folder).parts:
-                continue
+            if folder.name == "Final Sprite Sheets":
+                parts = path.relative_to(folder).parts
+                if len(parts) < 5 or parts[3] != "sheets":
+                    continue
             stat = path.stat()
             width, height = image_size(path)
             rel = path.relative_to(root).as_posix()

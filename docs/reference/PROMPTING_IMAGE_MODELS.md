@@ -6,14 +6,14 @@ This workflow has been tested with GPT Image 2 and Nano Banana 2, but the rules 
 
 ## First Pose Contract
 
-Create one full-body character image on exact chroma green:
+Create one full-body character image on an exact flat chroma key. Default to chroma green:
 
 - Hex: `#00FF00`
 - RGB: `0,255,0`
 
-The green background must be perfectly flat. Require no shadows, no floor, no gradients, no props, no lighting falloff, and no background objects.
+The chroma background must be perfectly flat. Require no shadows, no floor, no gradients, no props, no lighting falloff, and no background objects.
 
-The character design must not use this green anywhere, including clothing, gems, magic, outlines, antialiasing, or glow.
+The character design must not use the selected key color anywhere, including clothing, gems, magic, outlines, antialiasing, or glow. Use a different flat key, such as magenta, when green conflicts with the character or effects.
 
 Frame the character for animation, not as a portrait:
 
@@ -34,6 +34,23 @@ For non-idle animations, prefer creating a transition pose with the image model 
 Give the image model the base character reference or idle frame, then ask for the first frame of the new animation as a small transition away from idle. Do not ask for the most extreme action pose first. This helps attack, run, jump, and magic animations flow naturally out of idle and avoids spending video-model seconds on idle.
 
 Use bridge frames when a final pose is good but does not connect well back to idle or into the next animation. Creating one or a few image-model bridge frames is often cheaper than rerunning video.
+
+## Reference Edits
+
+When editing an existing reference before video generation, preserve the
+character's original facing and body orientation unless the user explicitly asks
+for a mirror. If the change is weapon or prop ownership, move only that prop and
+repair the old hand/prop area.
+
+Use explicit invariants:
+
+- keep the original body facing and camera angle
+- do not mirror, flip, rotate, or redraw the full character
+- place the weapon or prop in the requested hand, such as the foreground hand
+  closest to camera
+- preserve the exact flat chroma key, using the configured key color rather
+  than assuming green
+- keep the final edited reference full-body, centered, and animation-safe
 
 ## Prompt Requirements
 

@@ -92,7 +92,9 @@ python tools/animation_pipeline.py \
 
 ## Chroma-Key Extracted Frames
 
-Use this when frame extraction produced frames on a solid green background:
+Use this when frame extraction produced frames on a solid chroma background.
+The default key is `#00ff00`, but any flat key color can be passed with
+`--background-color`:
 
 ```bash
 python tools/animation_pipeline.py \
@@ -100,7 +102,7 @@ python tools/animation_pipeline.py \
   --frames 16 \
   --background-mode chroma \
   --layout-mode preserve-canvas \
-  --key "#00ff00" \
+  --background-color "#00ff00" \
   --output work/sheets/hero/jump/hero_jump_16f_256.png \
   --preview work/previews/hero_jump_16f_preview.png \
   --frames-dir work/frames/hero/jump_16f_256 \
@@ -118,6 +120,8 @@ python tools/animation_pipeline.py \
   animation can end up with a different effective zoom.
 - Use `--background-mode alpha` for already-transparent frames.
 - Use `--background-mode chroma` for flat-key backgrounds.
+- Use `--background-color "#e80fe3"` or another exact hex value when the source
+  was intentionally generated on a non-green key.
 
 ## Read The Output
 

@@ -1,17 +1,41 @@
-# Sprite Sheet Pipeline
+# Game-Art Sprite Sheet Kit
 
-Reusable video-to-sprite-sheet pipeline for turning ordered animation frames into
-clean horizontal `256 x 256` sprite strips.
+Turn AI-generated character motion into reviewable `256 x 256` sprite sheets:
+extract frames, matte and clean them, build horizontal strips, inspect them in a
+browser viewer, and promote only approved outputs.
 
-This repo includes reusable workflow docs, processing tools, a static viewer,
-and a generic AI-assistant skill. It intentionally excludes generated assets,
-videos, scratch outputs, demo sheets, and project-specific art.
+This repo is a practical production kit for indie game devs and AI art builders
+who have rough generated animation and need assets they can actually evaluate in
+a game workflow. It includes prompting references, FFmpeg frame extraction,
+cleanup/repack tools, validation reports, a browser viewer, and an AI-assistant
+skill for guided runs.
+
+It intentionally excludes generated assets, videos, scratch outputs, demo
+sheets, and project-specific art.
+
+> Note for AI agents: this README is written for human readers. For the
+> operational workflow, start with `AGENTS.md`, then
+> `docs/ANIMATION_PIPELINE_NOTES.md`.
+
+## What It Does
+
+- Starts from AI-generated motion, Kling clips, or other source animation
+  videos.
+- Extracts ordered PNG frames with an FFmpeg wrapper.
+- Removes light or flat chroma backgrounds when needed.
+- Packs frames into transparent `256 x 256` cells while preserving the source
+  video canvas, so character scale and empty space stay consistent across
+  animations.
+- Writes a horizontal sprite strip, matching individual frame cells, a preview
+  image, and a JSON validation report.
+- Lets you inspect final sheets in a static browser viewer before promotion.
+
+The core before/after is simple: rough character motion in, reviewable game-art
+sprite strip out.
 
 ## Quick Start
 
-1. If using an AI assistant, give it
-   `skills/sprite-sheet-pipeline/SKILL.md` or install that folder in the
-   assistant's skill system. Ask it to use the `sprite-sheet-pipeline` skill.
+1. Put source animation videos in `Videos/` or `Videos/To Be Processed/`.
 2. Set up Python dependencies:
 
    ```bash
@@ -32,7 +56,7 @@ videos, scratch outputs, demo sheets, and project-specific art.
    # Ubuntu/Debian Linux
    sudo apt install ffmpeg
    ```
-3. To create source footage, use:
+3. To create or refine source footage, use:
    - `docs/reference/PROMPTING_IMAGE_MODELS.md` for first poses, character
      references, and transition frames.
    - `docs/reference/PROMPTING_VIDEO_MODELS.md` for Kling or other
@@ -47,6 +71,9 @@ videos, scratch outputs, demo sheets, and project-specific art.
    ```
 
 6. Open `sprite_viewer.html` directly in a browser to inspect final sheets.
+7. If using an AI assistant, give it
+   `skills/sprite-sheet-pipeline/SKILL.md` or install that folder in the
+   assistant's skill system. Ask it to use the `sprite-sheet-pipeline` skill.
 
 ## Included
 
@@ -56,9 +83,9 @@ videos, scratch outputs, demo sheets, and project-specific art.
   notes, and game integration guidance.
 - `docs/reference/`: text-only image/video prompting references for creating
   clean animation source footage when needed.
-- `skills/sprite-sheet-pipeline/`: generic AI-assistant skill that routes
-  image prompting, video prompting, processing, validation, and promotion tasks
-  to the right docs.
+- `skills/sprite-sheet-pipeline/`: AI-assistant skill that routes image
+  prompting, video prompting, processing, validation, and promotion tasks to the
+  right docs.
 - `sprite_viewer.html`: static browser viewer for horizontal sprite sheets.
 - `sprite_gallery_manifest.js`: empty starter manifest for the viewer.
 - `sprite_gallery_pins.json`: empty starter pin list for the viewer.

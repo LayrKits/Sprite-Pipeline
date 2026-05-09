@@ -25,7 +25,9 @@
 
     body {
       margin: 0;
+      height: 100vh;
       min-height: 100vh;
+      overflow: hidden;
       background: var(--bg);
       color: var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -39,13 +41,15 @@
     }
 
     .app {
-      min-height: 100vh;
+      height: 100vh;
+      min-height: 0;
       display: grid;
       grid-template-columns: minmax(0, 1fr) 320px;
     }
 
     .stage {
       min-width: 0;
+      min-height: 0;
       display: grid;
       grid-template-rows: auto minmax(0, 1fr) auto;
       border-right: 1px solid var(--line);
@@ -53,7 +57,8 @@
     }
 
     .topbar,
-    .timeline {
+    .timeline,
+    .frame-tray {
       min-height: 64px;
       display: flex;
       align-items: center;
@@ -63,9 +68,37 @@
       border-bottom: 1px solid var(--line);
     }
 
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .topbar-controls {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
     .timeline {
       border-top: 1px solid var(--line);
       border-bottom: 0;
+    }
+
+    .frame-tray {
+      display: grid;
+      gap: 10px;
+      min-height: 0;
+      max-height: 34vh;
+      overflow: auto;
+      border-top: 1px solid var(--line);
+      border-bottom: 0;
+      align-items: stretch;
+    }
+
+    .frame-tray[hidden] {
+      display: none;
     }
 
     .title {
@@ -73,7 +106,6 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
-      margin-right: auto;
     }
 
     h1 {
@@ -89,7 +121,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 52vw;
+      max-width: 100%;
     }
 
     .viewport {
@@ -110,14 +142,14 @@
 
     canvas {
       display: block;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
+      image-rendering: auto;
       box-shadow: 0 18px 54px rgba(0, 0, 0, 0.32);
       background: transparent;
       max-width: none;
     }
 
     .icon-button {
+      flex: 0 0 38px;
       width: 38px;
       height: 38px;
       display: inline-grid;
@@ -155,20 +187,80 @@
       font-weight: 800;
     }
 
+    .alignment-note {
+      min-height: 38px;
+      max-width: 260px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      border: 1px solid color-mix(in srgb, var(--accent), transparent 28%);
+      border-radius: 6px;
+      color: #dff8ef;
+      background: rgba(105, 192, 163, 0.13);
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1;
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .alignment-note::before {
+      content: "↕";
+      color: var(--accent);
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .alignment-note:hover {
+      border-color: var(--accent);
+      background: rgba(105, 192, 163, 0.2);
+    }
+
+    .alignment-note[hidden] {
+      display: none;
+    }
+
     .icon-button.pinned {
       color: var(--accent-2);
       border-color: color-mix(in srgb, var(--accent-2), transparent 24%);
       background: #3d3729;
     }
 
+    .mini-icon-button {
+      width: 24px;
+      height: 24px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--muted);
+      background: #20242a;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .mini-icon-button:hover,
+    .mini-icon-button.active {
+      color: var(--text);
+      border-color: var(--accent);
+      background: #263139;
+    }
+
     .side {
       min-width: 0;
+      min-height: 0;
+      max-height: 100vh;
       display: flex;
       flex-direction: column;
       background: var(--panel);
     }
 
     .side-header {
+      flex: 0 0 auto;
       padding: 16px;
       border-bottom: 1px solid var(--line);
     }
@@ -180,10 +272,14 @@
     }
 
     .controls {
+      flex: 1 1 auto;
+      min-height: 0;
       display: grid;
       gap: 18px;
       padding: 16px;
-      overflow: auto;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     .group {
@@ -295,6 +391,68 @@
       user-select: none;
     }
 
+    .frame-selector-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 30px;
+    }
+
+    .frame-selector-summary {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .frame-selector-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
+      gap: 8px;
+    }
+
+    .frame-cell {
+      position: relative;
+      aspect-ratio: 1;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #15181c;
+      cursor: pointer;
+    }
+
+    .frame-cell:hover,
+    .frame-cell.current {
+      border-color: var(--accent);
+    }
+
+    .frame-cell.deselected {
+      opacity: 0.38;
+      filter: grayscale(0.8);
+    }
+
+    .frame-cell canvas {
+      width: 100%;
+      height: 100%;
+      box-shadow: none;
+    }
+
+    .frame-cell-index {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      min-width: 22px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.68);
+      font-size: 11px;
+      font-weight: 650;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
     .drop-warning {
       display: none;
       padding: 8px 10px;
@@ -316,6 +474,28 @@
       gap: 6px;
     }
 
+    .structure-actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .structure-reload-button {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--text);
+      background: #20242a;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .structure-reload-button:hover {
+      border-color: var(--accent);
+      background: #263139;
+    }
+
     .gallery-section {
       display: grid;
       gap: 6px;
@@ -335,6 +515,13 @@
       font-weight: 650;
       letter-spacing: 0.02em;
       text-transform: uppercase;
+    }
+
+    .gallery-heading-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
     }
 
     .gallery-count {
@@ -387,7 +574,14 @@
     }
 
     @media (max-width: 860px) {
+      body {
+        height: auto;
+        overflow: auto;
+      }
+
       .app {
+        height: auto;
+        min-height: 100vh;
         grid-template-columns: 1fr;
       }
 
@@ -397,8 +591,31 @@
         border-bottom: 1px solid var(--line);
       }
 
+      .side {
+        max-height: none;
+      }
+
+      .controls {
+        overflow: visible;
+      }
+
       .path {
         max-width: 72vw;
+      }
+    }
+
+    @media (max-width: 1160px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar-controls {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .alignment-note {
+        max-width: min(100%, 360px);
       }
     }
   </style>
@@ -411,10 +628,13 @@
           <h1>Sprite Sheet Viewer</h1>
           <div class="path" id="sheetPath">Final Sprite Sheets</div>
         </div>
-        <button class="icon-button" id="pinButton" type="button" title="Pin sheet" aria-label="Pin sheet" aria-pressed="false">☆</button>
-        <button class="icon-button" id="prevButton" type="button" title="Previous frame" aria-label="Previous frame">⏮</button>
-        <button class="icon-button primary" id="playButton" type="button" title="Play or pause" aria-label="Play or pause">▶</button>
-        <button class="icon-button" id="nextButton" type="button" title="Next frame" aria-label="Next frame">⏭</button>
+        <div class="topbar-controls">
+          <a class="alignment-note" id="alignmentReviewLink" href="#" hidden>Alignment review</a>
+          <button class="icon-button" id="pinButton" type="button" title="Pin sheet" aria-label="Pin sheet" aria-pressed="false">☆</button>
+          <button class="icon-button" id="prevButton" type="button" title="Previous frame" aria-label="Previous frame">⏮</button>
+          <button class="icon-button primary" id="playButton" type="button" title="Play or pause" aria-label="Play or pause">▶</button>
+          <button class="icon-button" id="nextButton" type="button" title="Next frame" aria-label="Next frame">⏭</button>
+        </div>
       </div>
 
       <div class="viewport" id="viewport">
@@ -422,8 +642,18 @@
       </div>
 
       <div class="timeline">
+        <button class="icon-button" id="frameTrayToggle" type="button" title="Frame selector" aria-label="Frame selector" aria-expanded="false">^</button>
         <input id="frameSlider" type="range" min="0" max="31" value="0" aria-label="Frame">
         <div class="frame-readout" id="frameReadout">1 / 32</div>
+      </div>
+
+      <div class="frame-tray" id="frameTray" hidden>
+        <div class="frame-selector-bar">
+          <button class="icon-button" id="selectAllFramesButton" type="button" title="Select all frames" aria-label="Select all frames">✓</button>
+          <button class="icon-button" id="invertFramesButton" type="button" title="Invert frame selection" aria-label="Invert frame selection">↕</button>
+          <div class="frame-selector-summary" id="frameSelectionSummary">0 / 0</div>
+        </div>
+        <div class="frame-selector-grid" id="frameGrid" aria-label="Frame selection"></div>
       </div>
     </section>
 
@@ -469,12 +699,19 @@
             <input id="frameCountInput" type="number" min="1" step="1" value="32">
             <div class="value" id="inferValue">auto</div>
           </div>
+          <div class="row compact" id="rowSelectRow">
+            <label for="rowSelect">Row</label>
+            <select id="rowSelect"></select>
+          </div>
         </section>
 
         <section class="group">
           <div class="gallery-section" id="pinnedSection">
             <div class="gallery-heading">
-              <span>Pinned</span>
+              <div class="gallery-heading-title">
+                <span>Pinned</span>
+                <button class="mini-icon-button" id="pinnedTransitionToggle" type="button" title="Pinned transition" aria-label="Pinned transition" aria-pressed="false">◧</button>
+              </div>
               <span class="gallery-count" id="pinnedCount">0</span>
             </div>
             <div class="gallery" id="pinnedGallery"></div>
@@ -484,6 +721,9 @@
               <span>Last 10</span>
             </div>
             <div class="gallery" id="gallery"></div>
+            <div class="structure-actions">
+              <button class="structure-reload-button" id="reloadLocalStructureButton" type="button">Re-load local structure</button>
+            </div>
           </div>
           <div class="library-picker">
             <div class="row compact">
@@ -517,6 +757,10 @@
               <span id="frameSize">256 x 256</span>
             </div>
             <div class="stat">
+              <span>Rows</span>
+              <span id="rowStat">1</span>
+            </div>
+            <div class="stat">
               <span>Duration</span>
               <span id="durationStat">2.67s</span>
             </div>
@@ -534,15 +778,15 @@
   <script>
     const RAW_SHEETS = Array.isArray(window.SPRITE_SHEETS) ? window.SPRITE_SHEETS : [];
     const LATEST_LIMIT = Math.max(1, Number(window.SPRITE_LATEST_LIMIT) || 10);
+    const FOLDER_SHEETS_ENDPOINT = "api/sprite-sheets";
     const LAST_GAME_VALUE = "__last_10__";
     const PIN_STORAGE_KEY = "sprite-viewer-pinned-sheets-v1";
     const SHEET_METADATA_STORAGE_KEY = "sprite-viewer-sheet-metadata-v1";
+    const PINNED_TRANSITION_STORAGE_KEY = "sprite-viewer-pinned-transition-v1";
     const PINNED_JSON_PATH = "sprite_gallery_pins.json";
     const DEFAULT_FPS = 12;
-    const SHEETS = RAW_SHEETS.map((sheet) => ({
-      ...sheet,
-      ...folderParts(sheet)
-    }));
+    const PINNED_TRANSITION_MS = 1500;
+    let SHEETS = normalizeSheetList(RAW_SHEETS);
     const DEFAULT_SHEET_ENTRY = SHEETS.length ? SHEETS[0] : null;
     const DEFAULT_SHEET = DEFAULT_SHEET_ENTRY
       ? DEFAULT_SHEET_ENTRY.path
@@ -555,6 +799,9 @@
       frameHeight: 256,
       frameCount: DEFAULT_SHEET_ENTRY ? 32 : 1,
       frameIndex: 0,
+      rowCount: 1,
+      rowIndex: 0,
+      rowLabels: [],
       fps: DEFAULT_FPS,
       scale: 1,
       playing: false,
@@ -562,14 +809,26 @@
       accumulator: 0,
       rafId: 0,
       fileBytes: 0,
-      currentPath: DEFAULT_SHEET
+      currentPath: DEFAULT_SHEET,
+      selectedFrames: [],
+      frameSelectorOpen: false,
+      pinnedTransitionEnabled: readStoredPinnedTransition(),
+      transitionRafId: 0,
+      transitionActive: false
     };
 
     const canvas = document.getElementById("spriteCanvas");
     const ctx = canvas.getContext("2d");
     const viewport = document.getElementById("viewport");
     const timeline = document.querySelector(".timeline");
+    const frameTrayToggle = document.getElementById("frameTrayToggle");
+    const frameTray = document.getElementById("frameTray");
+    const selectAllFramesButton = document.getElementById("selectAllFramesButton");
+    const invertFramesButton = document.getElementById("invertFramesButton");
+    const frameSelectionSummary = document.getElementById("frameSelectionSummary");
+    const frameGrid = document.getElementById("frameGrid");
     const pinButton = document.getElementById("pinButton");
+    const alignmentReviewLink = document.getElementById("alignmentReviewLink");
     const playButton = document.getElementById("playButton");
     const prevButton = document.getElementById("prevButton");
     const nextButton = document.getElementById("nextButton");
@@ -582,6 +841,8 @@
     const frameWidthInput = document.getElementById("frameWidthInput");
     const frameHeightInput = document.getElementById("frameHeightInput");
     const frameCountInput = document.getElementById("frameCountInput");
+    const rowSelectRow = document.getElementById("rowSelectRow");
+    const rowSelect = document.getElementById("rowSelect");
     const sheetFileInput = document.getElementById("sheetFileInput");
     const gameSelect = document.getElementById("gameSelect");
     const characterRow = document.getElementById("characterRow");
@@ -592,9 +853,12 @@
     const gallery = document.getElementById("gallery");
     const pinnedGallery = document.getElementById("pinnedGallery");
     const pinnedCount = document.getElementById("pinnedCount");
+    const pinnedTransitionToggle = document.getElementById("pinnedTransitionToggle");
+    const reloadLocalStructureButton = document.getElementById("reloadLocalStructureButton");
     const sheetPath = document.getElementById("sheetPath");
     const sheetSize = document.getElementById("sheetSize");
     const frameSize = document.getElementById("frameSize");
+    const rowStat = document.getElementById("rowStat");
     const durationStat = document.getElementById("durationStat");
     const fileSizeStat = document.getElementById("fileSizeStat");
     const inferValue = document.getElementById("inferValue");
@@ -618,6 +882,32 @@
         character: sheet.character || parts[rootIndex + 2] || "",
         animation: sheet.animation || parts[rootIndex + 3] || ""
       };
+    }
+
+    function isSpriteSheetPath(sheet) {
+      const parts = String(sheet && sheet.path ? sheet.path : "").split("/");
+      const rootIndex = parts.indexOf("Final Sprite Sheets");
+      if (rootIndex < 0) {
+        return true;
+      }
+      return parts.includes("sheets") && !parts.includes("frames") && !parts.includes("previews");
+    }
+
+    function normalizeSheetList(value) {
+      const sheets = Array.isArray(value) ? value : value && Array.isArray(value.sheets) ? value.sheets : [];
+      return sheets
+        .map((sheet) => ({
+          ...sheet,
+          ...folderParts(sheet)
+        }))
+        .filter((sheet) => sheet.path && isSpriteSheetPath(sheet))
+        .sort((a, b) => {
+          const modified = Number(b.modified || 0) - Number(a.modified || 0);
+          if (modified !== 0) {
+            return modified;
+          }
+          return String(a.path).localeCompare(String(b.path), undefined, { numeric: true, sensitivity: "base" });
+        });
     }
 
     function sortText(values) {
@@ -646,6 +936,50 @@
     function normalizeFps(value) {
       const fps = Math.round(Number(value));
       return clamp(Number.isFinite(fps) ? fps : DEFAULT_FPS, 1, 60);
+    }
+
+    function positiveInteger(value, fallback = 0) {
+      const number = Math.floor(Number(value));
+      return Number.isFinite(number) && number > 0 ? number : fallback;
+    }
+
+    function rowLabel(index) {
+      return state.rowLabels[index] || `Row ${index + 1}`;
+    }
+
+    function inferLayoutFromName(sheet) {
+      const label = String(sheet && (sheet.label || sheet.path) ? sheet.label || sheet.path : "");
+      const match = label.match(/_(\d+)f_(\d+)(?:\D|$)/i);
+      if (!match) {
+        return null;
+      }
+      return {
+        frameCount: positiveInteger(match[1], 1),
+        frameWidth: positiveInteger(match[2], 256),
+        frameHeight: positiveInteger(match[2], 256)
+      };
+    }
+
+    function inferFrameSizeFromImage(sheet) {
+      const named = inferLayoutFromName(sheet);
+      if (named) {
+        return named;
+      }
+      if (state.imageLoaded && state.image.naturalWidth % 256 === 0 && state.image.naturalHeight % 256 === 0) {
+        return {
+          frameWidth: 256,
+          frameHeight: 256,
+          frameCount: Math.max(1, Math.floor(state.image.naturalWidth / 256))
+        };
+      }
+      if (state.imageLoaded && state.image.naturalHeight > 0) {
+        return {
+          frameWidth: state.image.naturalHeight,
+          frameHeight: state.image.naturalHeight,
+          frameCount: Math.max(1, Math.floor(state.image.naturalWidth / state.image.naturalHeight))
+        };
+      }
+      return null;
     }
 
     function metadataPathForSheet(sheet) {
@@ -697,6 +1031,14 @@
       }
     }
 
+    function readStoredPinnedTransition() {
+      try {
+        return localStorage.getItem(PINNED_TRANSITION_STORAGE_KEY) === "true";
+      } catch {
+        return false;
+      }
+    }
+
     let pinnedPaths = readStoredPinnedPaths();
     let sheetMetadata = readStoredSheetMetadata();
     let metadataLoadToken = 0;
@@ -717,6 +1059,14 @@
       }
     }
 
+    function savePinnedTransition() {
+      try {
+        localStorage.setItem(PINNED_TRANSITION_STORAGE_KEY, state.pinnedTransitionEnabled ? "true" : "false");
+      } catch {
+        setWarning("Pinned transition preference could not be saved in this browser.");
+      }
+    }
+
     function hasStoredPinnedPaths() {
       try {
         return localStorage.getItem(PIN_STORAGE_KEY) !== null;
@@ -731,6 +1081,77 @@
 
     function currentSheet() {
       return sheetByPath(state.currentPath);
+    }
+
+    function alignmentLink(sheet) {
+      const alignment = sheet && (sheet.alignment || sheet.horizontalAlignment || sheet.verticalAlignment);
+      if (!alignment || !alignment.ran) {
+        return null;
+      }
+      const axis = alignment.axis === "horizontal" ? "horizontal" : alignment.axis === "vertical" ? "vertical" : "";
+      const axisLabel = axis ? `${axis[0].toUpperCase()}${axis.slice(1)} alignment` : "Alignment";
+      if (alignment.candidateReviewPath) {
+        const hostedReviewPath = `alignment-review?path=${encodeURIComponent(alignment.candidateReviewPath)}`;
+        return {
+          href: window.location.protocol === "file:" ? alignment.candidateReviewPath : hostedReviewPath,
+          label: "Review candidates",
+          title: `Open ${axis || "sprite"} alignment candidate review`,
+          axisLabel
+        };
+      }
+      if (alignment.assessmentPath) {
+        return {
+          href: alignment.assessmentPath,
+          label: "View assessment",
+          title: `Open ${axis || "sprite"} alignment assessment`,
+          axisLabel
+        };
+      }
+      if (alignment.reportPath) {
+        return {
+          href: alignment.reportPath,
+          label: "View alignment report",
+          title: `Open ${axis || "sprite"} alignment report`,
+          axisLabel
+        };
+      }
+      return null;
+    }
+
+    function syncAlignmentNote() {
+      const link = alignmentLink(currentSheet());
+      if (!link) {
+        alignmentReviewLink.hidden = true;
+        alignmentReviewLink.removeAttribute("href");
+        return;
+      }
+      alignmentReviewLink.hidden = false;
+      alignmentReviewLink.href = encodeURI(link.href);
+      alignmentReviewLink.textContent = `${link.axisLabel} ran: ${link.label}`;
+      alignmentReviewLink.title = link.title;
+      alignmentReviewLink.setAttribute("aria-label", link.title);
+    }
+
+    function sheetSrc(sheet) {
+      return sheet && sheet.src ? sheet.src : sheet && sheet.path ? sheet.path : "";
+    }
+
+    function servedPath(path) {
+      return `/${String(path || "").split("/").map(encodeURIComponent).join("/")}`;
+    }
+
+    function directSheetFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const sheet = params.get("sheet");
+      if (!sheet) {
+        return null;
+      }
+      const cleanPath = sheet.replace(/^\/+/, "");
+      return {
+        label: cleanPath.split("/").pop() || cleanPath,
+        path: cleanPath,
+        src: servedPath(cleanPath)
+      };
     }
 
     function isPinned(path) {
@@ -827,6 +1248,47 @@
       return SHEETS.slice(0, LATEST_LIMIT);
     }
 
+    async function reloadLocalStructure(options = {}) {
+      if (window.location.protocol === "file:") {
+        setWarning("Automatic reload needs the local JS viewer server. Start tools/serve_sprite_viewer.mjs and open the http://127.0.0.1 viewer URL.");
+        return;
+      }
+      const previousLabel = reloadLocalStructureButton.textContent;
+      const previousPath = state.currentPath;
+      reloadLocalStructureButton.disabled = true;
+      reloadLocalStructureButton.textContent = "Re-loading...";
+      if (!options.quiet) {
+        setWarning("Re-loading sprite sheets...");
+      }
+      try {
+        const response = await fetch(FOLDER_SHEETS_ENDPOINT, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const payload = await response.json();
+        SHEETS = normalizeSheetList(payload);
+        renderGallery();
+        populateGameOptions(LAST_GAME_VALUE);
+        const selectedSheet = SHEETS.find((sheet) => sheet.path === previousPath) || SHEETS[0] || null;
+        if (selectedSheet) {
+          loadImage(sheetSrc(selectedSheet), selectedSheet.path, selectedSheet);
+          if (!options.quiet) {
+            setWarning(`Loaded ${SHEETS.length} sprite sheet${SHEETS.length === 1 ? "" : "s"}.`);
+          }
+        } else {
+          sheetPath.textContent = "No sheet loaded";
+          setWarning("No sprite sheets found.");
+          syncControls();
+          draw();
+        }
+      } catch {
+        setWarning("Could not scan Final Sprite Sheets. Start tools/serve_sprite_viewer.mjs and open the local server URL.");
+      } finally {
+        reloadLocalStructureButton.disabled = false;
+        reloadLocalStructureButton.textContent = previousLabel;
+      }
+    }
+
     function optionLabel(value) {
       return value === LAST_GAME_VALUE ? "Last 10" : value;
     }
@@ -861,7 +1323,161 @@
       return `${scaled.toFixed(digits)} ${units[unitIndex]}`;
     }
 
+    function resetFrameSelection() {
+      state.selectedFrames = Array.from({ length: state.frameCount }, () => true);
+    }
+
+    function normalizeFrameSelection() {
+      if (!Array.isArray(state.selectedFrames) || state.selectedFrames.length !== state.frameCount) {
+        resetFrameSelection();
+      }
+      if (selectedFrameCount() === 0 && state.frameCount > 0) {
+        state.selectedFrames[clamp(state.frameIndex, 0, state.frameCount - 1)] = true;
+      }
+    }
+
+    function selectedFrameCount() {
+      return state.selectedFrames.reduce((total, selected) => total + (selected ? 1 : 0), 0);
+    }
+
+    function nextSelectedFrameFrom(index, delta) {
+      normalizeFrameSelection();
+      if (state.frameCount <= 1) {
+        return 0;
+      }
+      const direction = delta < 0 ? -1 : 1;
+      let next = clamp(index, 0, state.frameCount - 1);
+      for (let offset = 0; offset < state.frameCount; offset += 1) {
+        next = (next + direction + state.frameCount) % state.frameCount;
+        if (state.selectedFrames[next]) {
+          return next;
+        }
+      }
+      return clamp(index, 0, state.frameCount - 1);
+    }
+
+    function syncFrameSelectorState() {
+      normalizeFrameSelection();
+      const selectedCount = selectedFrameCount();
+      frameTray.hidden = !state.frameSelectorOpen;
+      frameTrayToggle.textContent = state.frameSelectorOpen ? "v" : "^";
+      frameTrayToggle.setAttribute("aria-expanded", state.frameSelectorOpen ? "true" : "false");
+      frameSelectionSummary.textContent = `${selectedCount} / ${state.frameCount}`;
+      selectAllFramesButton.disabled = selectedCount === state.frameCount;
+      invertFramesButton.disabled = state.frameCount <= 1;
+      for (const item of frameGrid.querySelectorAll(".frame-cell")) {
+        const index = Number(item.dataset.frameIndex);
+        const selected = Boolean(state.selectedFrames[index]);
+        item.classList.toggle("selected", selected);
+        item.classList.toggle("deselected", !selected);
+        item.classList.toggle("current", index === state.frameIndex);
+        item.setAttribute("aria-pressed", selected ? "true" : "false");
+        item.title = `Frame ${index + 1}`;
+      }
+    }
+
+    function renderFrameSelector() {
+      normalizeFrameSelection();
+      frameGrid.innerHTML = "";
+      if (!state.imageLoaded) {
+        syncFrameSelectorState();
+        return;
+      }
+      const thumbSize = 72;
+      for (let index = 0; index < state.frameCount; index += 1) {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "frame-cell";
+        item.dataset.frameIndex = String(index);
+        item.setAttribute("aria-label", `Frame ${index + 1}`);
+
+        const thumb = document.createElement("canvas");
+        thumb.width = thumbSize;
+        thumb.height = thumbSize;
+        const thumbCtx = thumb.getContext("2d");
+        thumbCtx.imageSmoothingEnabled = true;
+        thumbCtx.imageSmoothingQuality = "high";
+        thumbCtx.clearRect(0, 0, thumb.width, thumb.height);
+        const sourceY = state.rowIndex * state.frameHeight;
+        if ((index + 1) * state.frameWidth <= state.image.naturalWidth && sourceY + state.frameHeight <= state.image.naturalHeight) {
+          thumbCtx.drawImage(
+            state.image,
+            index * state.frameWidth,
+            sourceY,
+            state.frameWidth,
+            state.frameHeight,
+            0,
+            0,
+            thumb.width,
+            thumb.height
+          );
+        }
+
+        const label = document.createElement("span");
+        label.className = "frame-cell-index";
+        label.textContent = String(index + 1);
+
+        item.append(thumb, label);
+        item.addEventListener("click", () => toggleFrameSelection(index));
+        frameGrid.append(item);
+      }
+      syncFrameSelectorState();
+    }
+
+    function toggleFrameSelection(index) {
+      normalizeFrameSelection();
+      if (state.selectedFrames[index] && selectedFrameCount() <= 1) {
+        setWarning("At least one frame must stay selected.");
+        return;
+      }
+      state.selectedFrames[index] = !state.selectedFrames[index];
+      if (state.playing && !state.selectedFrames[state.frameIndex]) {
+        state.frameIndex = nextSelectedFrameFrom(state.frameIndex, 1);
+      }
+      syncControls();
+      draw();
+    }
+
+    function selectAllFrames() {
+      resetFrameSelection();
+      syncControls();
+      draw();
+    }
+
+    function invertFrameSelection() {
+      normalizeFrameSelection();
+      const inverted = state.selectedFrames.map((selected) => !selected);
+      state.selectedFrames = inverted.some(Boolean) ? inverted : state.selectedFrames;
+      if (state.playing && !state.selectedFrames[state.frameIndex]) {
+        state.frameIndex = nextSelectedFrameFrom(state.frameIndex, 1);
+      }
+      syncControls();
+      draw();
+    }
+
+    function syncRowOptions() {
+      const rowCount = Math.max(1, state.rowCount);
+      rowSelectRow.hidden = rowCount <= 1;
+      rowSelect.disabled = rowCount <= 1;
+      if (rowSelect.options.length !== rowCount) {
+        rowSelect.innerHTML = "";
+        for (let index = 0; index < rowCount; index += 1) {
+          const option = document.createElement("option");
+          option.value = String(index);
+          option.textContent = rowLabel(index);
+          rowSelect.append(option);
+        }
+      } else {
+        for (let index = 0; index < rowCount; index += 1) {
+          rowSelect.options[index].textContent = rowLabel(index);
+        }
+      }
+      state.rowIndex = clamp(state.rowIndex, 0, rowCount - 1);
+      rowSelect.value = String(state.rowIndex);
+    }
+
     function syncControls() {
+      normalizeFrameSelection();
       fpsRange.value = String(state.fps);
       fpsInput.value = String(state.fps);
       scaleRange.value = String(state.scale);
@@ -872,14 +1488,33 @@
       frameSlider.max = String(Math.max(0, state.frameCount - 1));
       frameSlider.value = String(state.frameIndex);
       frameReadout.textContent = `${state.frameIndex + 1} / ${state.frameCount}`;
+      syncRowOptions();
       sheetSize.textContent = state.imageLoaded
         ? `${state.image.naturalWidth} x ${state.image.naturalHeight}`
         : state.currentPath ? "loading" : "none";
       frameSize.textContent = `${state.frameWidth} x ${state.frameHeight}`;
-      durationStat.textContent = `${(state.frameCount / state.fps).toFixed(2)}s`;
+      rowStat.textContent = state.rowCount > 1 ? `${state.rowIndex + 1} / ${state.rowCount}` : "1";
+      durationStat.textContent = `${(selectedFrameCount() / state.fps).toFixed(2)}s`;
       fileSizeStat.textContent = formatBytes(state.fileBytes);
       playButton.textContent = state.playing ? "⏸" : "▶";
+      syncFrameSelectorState();
+      syncPinnedTransitionToggle();
       syncPinButton();
+      syncAlignmentNote();
+    }
+
+    function syncPinnedTransitionToggle() {
+      pinnedTransitionToggle.classList.toggle("active", state.pinnedTransitionEnabled);
+      pinnedTransitionToggle.textContent = state.pinnedTransitionEnabled ? "◨" : "◧";
+      pinnedTransitionToggle.setAttribute("aria-pressed", state.pinnedTransitionEnabled ? "true" : "false");
+      pinnedTransitionToggle.title = state.pinnedTransitionEnabled ? "Disable pinned transition" : "Enable pinned transition";
+      pinnedTransitionToggle.setAttribute("aria-label", pinnedTransitionToggle.title);
+    }
+
+    function togglePinnedTransition() {
+      state.pinnedTransitionEnabled = !state.pinnedTransitionEnabled;
+      savePinnedTransition();
+      syncPinnedTransitionToggle();
     }
 
     function resizeCanvas() {
@@ -891,30 +1526,151 @@
       }
     }
 
-    function draw() {
-      resizeCanvas();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (!state.imageLoaded) {
-        return;
+    function drawFrameFrom(image, frameWidth, frameHeight, frameIndex, rowIndex = 0) {
+      const sx = frameIndex * frameWidth;
+      const sy = rowIndex * frameHeight;
+      if (sx + frameWidth > image.naturalWidth || sy + frameHeight > image.naturalHeight) {
+        return false;
       }
-      const sx = state.frameIndex * state.frameWidth;
-      if (sx + state.frameWidth > state.image.naturalWidth) {
-        setWarning("Frame settings extend past the sheet width.");
-        return;
-      }
-      setWarning("");
-      ctx.imageSmoothingEnabled = false;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       ctx.drawImage(
-        state.image,
+        image,
         sx,
-        0,
-        state.frameWidth,
-        state.frameHeight,
+        sy,
+        frameWidth,
+        frameHeight,
         0,
         0,
         canvas.width,
         canvas.height
       );
+      return true;
+    }
+
+    function draw() {
+      if (state.transitionActive) {
+        return;
+      }
+      resizeCanvas();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!state.imageLoaded) {
+        return;
+      }
+      if (!drawFrameFrom(state.image, state.frameWidth, state.frameHeight, state.frameIndex, state.rowIndex)) {
+        setWarning("Frame settings extend past the sheet bounds.");
+        return;
+      }
+      setWarning("");
+    }
+
+    function transitionLineColor() {
+      return backgroundSelect.value === "light" ? "#101316" : "#ffffff";
+    }
+
+    function captureCurrentView() {
+      if (!state.imageLoaded || !state.image || !state.image.naturalWidth) {
+        return null;
+      }
+      return {
+        image: state.image,
+        frameWidth: state.frameWidth,
+        frameHeight: state.frameHeight,
+        frameIndex: state.frameIndex,
+        frameCount: state.frameCount,
+        rowIndex: state.rowIndex,
+        selectedFrames: [...state.selectedFrames]
+      };
+    }
+
+    function cancelPinnedTransition() {
+      if (state.transitionRafId) {
+        cancelAnimationFrame(state.transitionRafId);
+      }
+      state.transitionRafId = 0;
+      state.transitionActive = false;
+    }
+
+    function selectedFrameFromView(view, startIndex, stepCount) {
+      if (!view || view.frameCount <= 1 || stepCount <= 0) {
+        return clamp(startIndex, 0, Math.max(0, (view && view.frameCount ? view.frameCount : 1) - 1));
+      }
+      const selectedFrames = Array.isArray(view.selectedFrames) && view.selectedFrames.length === view.frameCount
+        ? view.selectedFrames
+        : Array.from({ length: view.frameCount }, () => true);
+      let index = clamp(startIndex, 0, view.frameCount - 1);
+      if (!selectedFrames.some(Boolean)) {
+        return index;
+      }
+      for (let stepIndex = 0; stepIndex < stepCount; stepIndex += 1) {
+        for (let offset = 0; offset < view.frameCount; offset += 1) {
+          index = (index + 1) % view.frameCount;
+          if (selectedFrames[index]) {
+            break;
+          }
+        }
+      }
+      return index;
+    }
+
+    function drawPinnedTransitionFrame(previousView, progress, previousFrameIndex, nextFrameIndex) {
+      resizeCanvas();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawFrameFrom(previousView.image, previousView.frameWidth, previousView.frameHeight, previousFrameIndex, previousView.rowIndex || 0);
+      const wipeX = clamp(Math.round(canvas.width * progress), 0, canvas.width);
+      if (wipeX > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, wipeX, canvas.height);
+        ctx.clip();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawFrameFrom(state.image, state.frameWidth, state.frameHeight, nextFrameIndex, state.rowIndex);
+        ctx.restore();
+      }
+      if (progress < 1) {
+        const lineWidth = Math.max(2, Math.round(state.scale * 2));
+        const lineX = clamp(Math.round(wipeX - lineWidth / 2), 0, Math.max(0, canvas.width - lineWidth));
+        ctx.fillStyle = transitionLineColor();
+        ctx.fillRect(lineX, 0, lineWidth, canvas.height);
+      }
+    }
+
+    function startPinnedTransition(previousView, resumePlaying) {
+      cancelPinnedTransition();
+      state.transitionActive = true;
+      let startTime = 0;
+      const transitionFps = state.fps;
+      const nextView = {
+        frameCount: state.frameCount,
+        selectedFrames: [...state.selectedFrames]
+      };
+      const tick = (timestamp) => {
+        if (!state.transitionActive) {
+          return;
+        }
+        if (!startTime) {
+          startTime = timestamp;
+        }
+        const elapsed = timestamp - startTime;
+        const progress = clamp(elapsed / PINNED_TRANSITION_MS, 0, 1);
+        const frameSteps = resumePlaying ? Math.floor(elapsed / (1000 / transitionFps)) : 0;
+        const previousFrameIndex = selectedFrameFromView(previousView, previousView.frameIndex, frameSteps);
+        const nextFrameIndex = selectedFrameFromView(nextView, 0, frameSteps);
+        drawPinnedTransitionFrame(previousView, progress, previousFrameIndex, nextFrameIndex);
+        if (progress < 1) {
+          state.transitionRafId = requestAnimationFrame(tick);
+          return;
+        }
+        state.frameIndex = nextFrameIndex;
+        state.transitionRafId = 0;
+        state.transitionActive = false;
+        syncControls();
+        draw();
+        if (resumePlaying) {
+          setPlaying(true);
+        }
+      };
+      state.transitionRafId = requestAnimationFrame(tick);
     }
 
     function setFrame(index) {
@@ -924,7 +1680,7 @@
     }
 
     function step(delta) {
-      setFrame((state.frameIndex + delta + state.frameCount) % state.frameCount);
+      setFrame(nextSelectedFrameFrom(state.frameIndex, delta));
     }
 
     function frameIndexFromPointer(event) {
@@ -953,7 +1709,7 @@
       state.accumulator += delta;
       const frameMs = 1000 / state.fps;
       while (state.accumulator >= frameMs) {
-        state.frameIndex = (state.frameIndex + 1) % state.frameCount;
+        state.frameIndex = nextSelectedFrameFrom(state.frameIndex, 1);
         state.accumulator -= frameMs;
       }
       syncControls();
@@ -976,23 +1732,35 @@
       state.frameWidth = Math.max(1, Number(frameWidthInput.value) || 256);
       state.frameHeight = Math.max(1, Number(frameHeightInput.value) || 256);
       state.frameCount = Math.max(1, Number(frameCountInput.value) || inferFrameCount());
+      state.rowCount = state.imageLoaded
+        ? Math.max(1, Math.floor(state.image.naturalHeight / state.frameHeight))
+        : Math.max(1, state.rowCount);
+      state.rowIndex = clamp(state.rowIndex, 0, state.rowCount - 1);
       state.frameIndex = clamp(state.frameIndex, 0, state.frameCount - 1);
+      resetFrameSelection();
+      renderFrameSelector();
       syncControls();
       draw();
     }
 
     function applySheetDimensions(sheet) {
-      if (!sheet || !sheet.width || !sheet.height) {
+      const sheetWidth = positiveInteger(sheet && sheet.width, state.imageLoaded ? state.image.naturalWidth : 0);
+      const sheetHeight = positiveInteger(sheet && sheet.height, state.imageLoaded ? state.image.naturalHeight : 0);
+      if (sheetWidth < 1 || sheetHeight < 1) {
         return false;
       }
-      const sheetWidth = Number(sheet.width);
-      const sheetHeight = Number(sheet.height);
-      if (!Number.isFinite(sheetWidth) || !Number.isFinite(sheetHeight) || sheetHeight < 1) {
-        return false;
-      }
-      state.frameWidth = sheetHeight;
-      state.frameHeight = sheetHeight;
-      state.frameCount = Math.max(1, Math.floor(sheetWidth / sheetHeight));
+      const inferred = inferFrameSizeFromImage(sheet);
+      state.frameWidth = positiveInteger(sheet && sheet.frameWidth, inferred ? inferred.frameWidth : sheetHeight);
+      state.frameHeight = positiveInteger(sheet && sheet.frameHeight, inferred ? inferred.frameHeight : sheetHeight);
+      state.frameCount = positiveInteger(
+        sheet && sheet.frameCount,
+        inferred ? inferred.frameCount : Math.max(1, Math.floor(sheetWidth / state.frameWidth))
+      );
+      state.rowCount = positiveInteger(sheet && sheet.rowCount, Math.max(1, Math.floor(sheetHeight / state.frameHeight)));
+      state.rowLabels = Array.isArray(sheet && sheet.rowLabels)
+        ? sheet.rowLabels.slice(0, state.rowCount)
+        : [];
+      state.rowIndex = clamp(state.rowIndex, 0, state.rowCount - 1);
       inferValue.textContent = String(state.frameCount);
       return true;
     }
@@ -1003,7 +1771,7 @@
       }
     }
 
-    function createGalleryItem(sheet) {
+    function createGalleryItem(sheet, options = {}) {
       const item = document.createElement("button");
       item.type = "button";
       item.className = "gallery-item";
@@ -1013,14 +1781,14 @@
 
       const thumb = document.createElement("div");
       thumb.className = "gallery-thumb";
-      thumb.style.backgroundImage = `url("${sheet.path.replace(/"/g, "%22")}")`;
+      thumb.style.backgroundImage = `url("${sheetSrc(sheet).replace(/"/g, "%22")}")`;
 
       item.append(thumb);
-      item.addEventListener("click", () => loadImage(sheet.path, sheet.path, sheet));
+      item.addEventListener("click", () => loadImage(sheetSrc(sheet), sheet.path, sheet, { transition: Boolean(options.transition) }));
       return item;
     }
 
-    function renderSheetGallery(container, sheets, emptyText) {
+    function renderSheetGallery(container, sheets, emptyText, options = {}) {
       container.innerHTML = "";
       if (!sheets.length) {
         const empty = document.createElement("div");
@@ -1030,7 +1798,7 @@
         return;
       }
       for (const sheet of sheets) {
-        container.append(createGalleryItem(sheet));
+        container.append(createGalleryItem(sheet, options));
       }
       updateGallerySelection();
     }
@@ -1038,7 +1806,7 @@
     function renderPinnedGallery() {
       const sheets = pinnedSheets();
       pinnedCount.textContent = String(sheets.length);
-      renderSheetGallery(pinnedGallery, sheets, "No pinned sheets");
+      renderSheetGallery(pinnedGallery, sheets, "No pinned sheets", { transition: true });
     }
 
     function renderGallery() {
@@ -1128,13 +1896,21 @@
     }
 
     function sheetLabel(sheet, includeContext = false) {
-      const frameCount = sheet.height ? Math.floor(Number(sheet.width) / Number(sheet.height)) : 0;
+      const inferred = inferLayoutFromName(sheet);
+      const frameCount = positiveInteger(
+        sheet && sheet.frameCount,
+        inferred ? inferred.frameCount : sheet && sheet.height ? Math.floor(Number(sheet.width) / Number(sheet.height)) : 0
+      );
+      const rowCount = positiveInteger(sheet && sheet.rowCount, 1);
       const name = includeContext
         ? [sheet.character, sheet.animation].filter(Boolean).join(" / ")
         : sheet.animation || sheet.label || sheet.path;
       const parts = [name || sheet.label || sheet.path];
       if (frameCount > 0) {
         parts.push(`${frameCount}f`);
+      }
+      if (rowCount > 1) {
+        parts.push(`${rowCount} rows`);
       }
       if (sheet.bytes) {
         parts.push(formatBytes(sheet.bytes));
@@ -1223,15 +1999,20 @@
     function loadSelectedBrowserSheet() {
       const sheet = selectedBrowserSheet();
       if (sheet) {
-        loadImage(sheet.path, sheet.path, sheet);
+        loadImage(sheetSrc(sheet), sheet.path, sheet);
       }
     }
 
-    function loadImage(src, label, sheet = null) {
+    function loadImage(src, label, sheet = null, options = {}) {
+      const logicalPath = sheet && sheet.path ? sheet.path : src;
+      const previousView = options.transition && state.pinnedTransitionEnabled && logicalPath !== state.currentPath
+        ? captureCurrentView()
+        : null;
       const resumePlaying = state.playing;
+      cancelPinnedTransition();
       setPlaying(false);
       state.imageLoaded = false;
-      state.currentPath = src;
+      state.currentPath = logicalPath;
       state.fileBytes = sheet && sheet.bytes ? Number(sheet.bytes) : 0;
       applySheetMetadata(metadataForSheet(sheet), false);
       loadSheetMetadataFromFile(sheet);
@@ -1243,11 +2024,20 @@
         state.imageLoaded = true;
         if (!applySheetDimensions(sheet)) {
           state.frameCount = inferFrameCount();
+          state.rowCount = 1;
+          state.rowLabels = [];
         }
         state.frameIndex = 0;
+        state.rowIndex = 0;
+        resetFrameSelection();
+        renderFrameSelector();
         syncControls();
-        draw();
-        if (resumePlaying) {
+        if (previousView) {
+          startPinnedTransition(previousView, resumePlaying);
+        } else {
+          draw();
+        }
+        if (resumePlaying && !previousView) {
           setPlaying(true);
         }
       };
@@ -1259,9 +2049,22 @@
     }
 
     pinButton.addEventListener("click", toggleCurrentPin);
+    pinnedTransitionToggle.addEventListener("click", togglePinnedTransition);
     playButton.addEventListener("click", () => setPlaying(!state.playing));
     prevButton.addEventListener("click", () => step(-1));
     nextButton.addEventListener("click", () => step(1));
+    frameTrayToggle.addEventListener("click", () => {
+      state.frameSelectorOpen = !state.frameSelectorOpen;
+      if (state.frameSelectorOpen) {
+        renderFrameSelector();
+      }
+      syncControls();
+    });
+    selectAllFramesButton.addEventListener("click", selectAllFrames);
+    invertFramesButton.addEventListener("click", invertFrameSelection);
+    reloadLocalStructureButton.addEventListener("click", () => {
+      reloadLocalStructure();
+    });
 
     frameSlider.addEventListener("input", () => {
       const nextFrame = Number(frameSlider.value);
@@ -1272,7 +2075,8 @@
     let isScrubbingFrame = false;
 
     timeline.addEventListener("pointerdown", (event) => {
-      if (event.button !== 0 || frameReadout.contains(event.target)) {
+      const interactiveTarget = event.target.closest("button, input, select, label");
+      if (event.button !== 0 || frameReadout.contains(event.target) || interactiveTarget) {
         return;
       }
       isScrubbingFrame = true;
@@ -1323,6 +2127,12 @@
     frameWidthInput.addEventListener("input", updateFrameSettings);
     frameHeightInput.addEventListener("input", updateFrameSettings);
     frameCountInput.addEventListener("input", updateFrameSettings);
+    rowSelect.addEventListener("change", () => {
+      state.rowIndex = clamp(Number(rowSelect.value) || 0, 0, Math.max(0, state.rowCount - 1));
+      renderFrameSelector();
+      syncControls();
+      draw();
+    });
 
     backgroundSelect.addEventListener("change", () => {
       viewport.style.backgroundColor = backgroundSelect.value === "light" ? "#eceae5" : backgroundSelect.value === "dark" ? "#111316" : "var(--canvas-bg)";
@@ -1369,12 +2179,18 @@
     renderGallery();
     loadPinsFromJsonFile();
     populateGameOptions(LAST_GAME_VALUE);
-    if (DEFAULT_SHEET_ENTRY) {
+    const directSheet = directSheetFromQuery();
+    if (directSheet) {
+      loadImage(directSheet.src, directSheet.path, directSheet);
+    } else if (DEFAULT_SHEET_ENTRY) {
       loadImage(DEFAULT_SHEET, DEFAULT_SHEET, DEFAULT_SHEET_ENTRY);
     } else {
       sheetPath.textContent = "No sheet loaded";
       setWarning("Add sheets to Final Sprite Sheets and rebuild the manifest, or choose a local sheet file.");
       draw();
+    }
+    if (window.location.protocol !== "file:" && !directSheet) {
+      reloadLocalStructure({ quiet: true });
     }
   </script>
 </body>

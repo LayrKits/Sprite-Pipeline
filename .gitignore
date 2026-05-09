@@ -2,12 +2,21 @@
 __pycache__/
 *.py[cod]
 .venv/
+.env
+.env.*
+
+# Local-only API helper requested for ad hoc Runware calls.
+local/runware_request.py
 
 # Generated or project-specific inputs and outputs.
 Videos/**
 work/**
 Final Sprite Sheets/**
 Cleanup/**
+production/**
+
+# Generated review/workflow outputs. Keep workflow scripts, ignore run artifacts.
+isolated_workflows/*/runs/**
 
 # Keep the intended repo skeleton.
 !Videos/
@@ -36,3 +45,8 @@ Cleanup/**
 !Final Sprite Sheets/.gitkeep
 !Cleanup/
 !Cleanup/.gitkeep
+!production/
+!production/**/
+!production/**/.gitkeep
+!isolated_workflows/*/runs/
+!isolated_workflows/*/runs/.gitkeep
