@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 .env
 .env.*
+.codex/
 
 # Local-only API helper requested for ad hoc Runware calls.
 local/runware_request.py
