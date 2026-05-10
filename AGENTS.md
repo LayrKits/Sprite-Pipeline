@@ -258,10 +258,15 @@ root:
 node tools/serve_sprite_viewer.mjs
 ```
 
-Open the printed local URL in the integrated browser when available, normally
-`http://127.0.0.1:8000/sprite_viewer.html`. Use a regular browser only when the
-integrated browser is unavailable. For a newly generated or not-yet-promoted
-sheet, open the viewer with a direct sheet query, for example:
+Open the printed local URL with the Codex integrated Browser tool first,
+normally `http://127.0.0.1:8000/sprite_viewer.html`. This is the required first
+attempt for local sprite viewer and alignment review pages. Use a regular
+desktop browser only after the integrated Browser tool is unavailable or fails,
+and say why you are falling back. Do not use Safari, Chrome, macOS `open`,
+Computer Use, or Playwright CLI as the first attempt for viewer approval pages.
+Use Playwright CLI only for automated diagnostics, not as the default human
+review handoff path. For a newly generated or not-yet-promoted sheet, open the
+viewer with a direct sheet query, for example:
 
 ```text
 http://127.0.0.1:8000/sprite_viewer.html?sheet=work/sheets/hero/run/hero_run_24f_256.png
@@ -323,11 +328,13 @@ method. Candidate generation writes an immutable candidate sheet set for method
 review and a separate `working_copies/` sheet set for user edits. Manual nudges
 in the hosted review must save only into the working copy. `Restore from
 candidate` replaces the working copy with the immutable candidate and resets
-offsets. `Finalize` opens the current working copy in the sprite viewer for
-final visual checking. `Attempt automatic cleanup` may replace the selected
-method's working-copy offsets by aligning detected frame bottoms to the fixed
-ground guide line and then saving the working copy; it is still subject to user
-review and restore. Accept a vertical candidate only if it has no floor
+offsets. `Finalize` saves the current working copy, promotes it into
+`Final Sprite Sheets/<GameName>/<CharacterName>/<animation>/sheets/`, writes the
+matching exact individual cells into `frames/<frame-count>f_256/`, and opens the
+promoted sheet in the sprite viewer. `Attempt automatic cleanup` may replace the
+selected method's working-copy offsets by aligning detected frame bottoms to the
+fixed ground guide line and then saving the working copy; it is still subject to
+user review and restore. Accept a vertical candidate only if it has no floor
 penetration or canvas clipping, contact frames sit on the intended ground line,
 airborne frames still preserve the jump arc, horizontal placement is unchanged,
 and the matching individual frame cells are promoted with the sheet. Accept a

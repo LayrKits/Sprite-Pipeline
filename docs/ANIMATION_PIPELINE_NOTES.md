@@ -149,9 +149,14 @@ root and open the relevant review page:
 node tools/serve_sprite_viewer.mjs
 ```
 
-Use the integrated browser when available. If there is no integrated browser,
-open the printed local URL in a regular browser. For a generated sheet that has
-not yet been promoted, open it directly with:
+Open the printed local URL with the Codex integrated Browser tool first. This is
+the required first attempt for local sprite viewer and alignment review pages.
+Use a regular desktop browser only after the integrated Browser tool is
+unavailable or fails, and note the fallback reason. Do not use Safari, Chrome,
+macOS `open`, Computer Use, or Playwright CLI as the first attempt for viewer
+approval pages. Use Playwright CLI only for automated diagnostics, not as the
+default human review handoff path. For a generated sheet that has not yet been
+promoted, open it directly with:
 
 ```text
 http://127.0.0.1:8000/sprite_viewer.html?sheet=work/sheets/hero/run/hero_run_24f_256.png
@@ -255,12 +260,14 @@ as a playing animation with guide lines. Candidate generation writes two sheet
 sets: immutable method candidates for detailed review, and matching
 `working_copies/` sheets for user edits. Manual frame nudges save only into the
 working copy. Restore resets the working copy from the immutable candidate.
-Finalize opens the working copy in the sprite viewer. Attempt automatic cleanup
-may adjust the selected method's working copy and leaves Restore available if
-the result is too aggressive. If fixes are needed, make them as an explicit new
-candidate, use the hosted review's manual per-frame save flow, or rerun the
-alignment workflow and return to the candidate review gate. Do not add a second
-review stage for minor frame nudges.
+Finalize saves the working copy, promotes it into the normal
+`Final Sprite Sheets/<GameName>/<CharacterName>/<animation>/` folder structure,
+writes the exact matching individual frame cells, and opens the promoted sheet in
+the sprite viewer. Attempt automatic cleanup may adjust the selected method's
+working copy and leaves Restore available if the result is too aggressive. If
+fixes are needed, make them as an explicit new candidate, use the hosted review's
+manual per-frame save flow, or rerun the alignment workflow and return to the
+candidate review gate. Do not add a second review stage for minor frame nudges.
 
 ## Validation Rules
 

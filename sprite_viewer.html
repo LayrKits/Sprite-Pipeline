@@ -1154,6 +1154,11 @@
       };
     }
 
+    function shouldReloadLocalStructureFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      return ["1", "true", "yes"].includes(String(params.get("reloadLocalStructure") || "").toLowerCase());
+    }
+
     function isPinned(path) {
       return pinnedPaths.includes(path);
     }
@@ -2180,6 +2185,7 @@
     loadPinsFromJsonFile();
     populateGameOptions(LAST_GAME_VALUE);
     const directSheet = directSheetFromQuery();
+    const shouldReloadLocalStructure = shouldReloadLocalStructureFromQuery();
     if (directSheet) {
       loadImage(directSheet.src, directSheet.path, directSheet);
     } else if (DEFAULT_SHEET_ENTRY) {
@@ -2189,8 +2195,8 @@
       setWarning("Add sheets to Final Sprite Sheets and rebuild the manifest, or choose a local sheet file.");
       draw();
     }
-    if (window.location.protocol !== "file:" && !directSheet) {
-      reloadLocalStructure({ quiet: true });
+    if (window.location.protocol !== "file:" && (shouldReloadLocalStructure || !directSheet)) {
+      reloadLocalStructure({ quiet: !shouldReloadLocalStructure });
     }
   </script>
 </body>

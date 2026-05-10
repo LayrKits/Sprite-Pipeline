@@ -85,8 +85,10 @@ Normal processing order:
 4. Build a horizontal `256 x 256` sprite strip with
    `tools/animation_pipeline.py`.
 5. Review the preview PNG, individual cleaned frames, and JSON report.
-6. Run `node tools/serve_sprite_viewer.mjs` and open the generated sheet in the
-   integrated browser when available, or a regular browser otherwise.
+6. Run `node tools/serve_sprite_viewer.mjs` and open the generated sheet with
+   the Codex integrated Browser tool first. Use a regular desktop browser only
+   after the integrated Browser tool is unavailable or fails. Do not use
+   Playwright CLI as the default human review handoff path.
 7. If vertical or horizontal alignment ran, open the server-hosted alignment
    review page instead of the plain sheet viewer.
 8. Promote only approved sheets and matching cell frames into
@@ -113,6 +115,11 @@ Before promotion, verify:
 - preview order and timing feel correct
 - apparent character scale stays consistent across animations
 - final sheet and individual cell frames match exactly
+
+When the hosted alignment review is used, `Finalize` saves the current working
+copy, promotes it into `Final Sprite Sheets/<GameName>/<CharacterName>/<animation>/`,
+writes exact matching individual frame cells, and opens the promoted sheet in
+the viewer.
 
 After approval, move the source video to `Videos/Processed/` and move
 non-promoted generated artifacts for that pass into `Cleanup/`.

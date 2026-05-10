@@ -206,9 +206,112 @@ function safeFileSegment(value) {
   return String(value || "candidate").replace(/[^A-Za-z0-9_.-]+/g, "_");
 }
 
+function safeFolderSegment(value, fallback = "Unsorted") {
+  const cleaned = String(value || "")
+    .trim()
+    .replace(/[\\/]+/g, "_")
+    .replace(/[\u0000-\u001f]+/g, "")
+    .replace(/\s+/g, " ");
+  return cleaned && cleaned !== "." && cleaned !== ".." ? cleaned : fallback;
+}
+
 function isInsideRoot(root, filePath) {
   const relative = path.relative(root, filePath);
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+async function defaultGameName(root) {
+  const finalRoot = path.join(root, "Final Sprite Sheets");
+  try {
+    const entries = await readdir(finalRoot, { withFileTypes: true });
+    const folders = entries
+      .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+      .map((entry) => entry.name)
+      .sort((a, b) => collator.compare(a, b));
+    if (folders.length) {
+      return folders[0];
+    }
+  } catch {
+    // Fall through to the optional static manifest hint.
+  }
+
+  try {
+    const manifest = await readFile(path.join(root, "sprite_gallery_manifest.js"), "utf8");
+    const counts = new Map();
+    for (const match of manifest.matchAll(/"game"\s*:\s*"([^"]+)"/g)) {
+      counts.set(match[1], (counts.get(match[1]) || 0) + 1);
+    }
+    let best = "";
+    let bestCount = 0;
+    for (const [game, count] of counts.entries()) {
+      if (count > bestCount) {
+        best = game;
+        bestCount = count;
+      }
+    }
+    if (best) {
+      return best;
+    }
+  } catch {
+    // Ignore stale or missing manifests.
+  }
+  return "Unsorted";
+}
+
+function relativeSummaryInput(root, summary) {
+  const input = String(summary && summary.input ? summary.input : "");
+  if (!input) {
+    return "";
+  }
+  const resolved = path.resolve(root, input);
+  if (path.isAbsolute(input) && isInsideRoot(root, resolved)) {
+    return toPosix(path.relative(root, resolved));
+  }
+  return toPosix(input).replace(/^\/+/, "");
+}
+
+async function inferPromotionTarget(root, summary) {
+  const relInput = relativeSummaryInput(root, summary);
+  const parts = relInput.split("/");
+  let game = "";
+  let character = "";
+  let animation = "";
+  if (parts.length >= 5 && parts[0] === "Final Sprite Sheets") {
+    game = parts[1] || "";
+    character = parts[2] || "";
+    animation = parts[3] || "";
+  } else if (parts.length >= 5 && parts[0] === "work" && parts[1] === "sheets") {
+    character = parts[2] || "";
+    animation = parts[3] || "";
+  }
+  if (!animation && relInput) {
+    const stem = path.basename(relInput, path.extname(relInput));
+    const match = stem.match(/^(.*?)(?:_\d+f_\d+)?(?:\..*)?$/);
+    animation = match && match[1] ? match[1] : stem;
+  }
+  return {
+    game: safeFolderSegment(game || await defaultGameName(root), "Unsorted"),
+    character: safeFolderSegment(character || "Sprite", "Sprite"),
+    animation: safeFolderSegment(animation || "animation", "animation")
+  };
+}
+
+function promotionTargetFromBody(bodyTarget, fallbackTarget) {
+  return {
+    game: safeFolderSegment(bodyTarget && bodyTarget.game, fallbackTarget.game),
+    character: safeFolderSegment(bodyTarget && bodyTarget.character, fallbackTarget.character),
+    animation: safeFolderSegment(bodyTarget && bodyTarget.animation, fallbackTarget.animation)
+  };
+}
+
+function promotedSheetName(target, method, summary) {
+  const frameCount = Math.max(1, Number(summary && summary.frame_count ? summary.frame_count : 1));
+  const cellSize = Array.isArray(summary && summary.cell_size) ? summary.cell_size : [256, 256];
+  const cellWidth = Number(cellSize[0] || 256);
+  const character = safeFileSegment(target.character || "Sprite");
+  const animation = safeFileSegment(target.animation || "animation");
+  const methodName = safeFileSegment(method || "aligned");
+  return `${character}_${animation}_${methodName}_${frameCount}f_${cellWidth}.png`;
 }
 
 async function existingRelativePath(root, candidatePath) {
@@ -639,6 +742,7 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
   const guidePrimaryValue = isHorizontal ? targetCoreX : groundY;
   const guideSecondaryLabel = isHorizontal ? "Center Y" : "Target waist Y";
   const guideSecondaryValue = isHorizontal ? centerY : waistY;
+  const promotionTarget = await inferPromotionTarget(root, summary);
   const overlayPath = path.join(summaryDir, "overlay_source.png");
   const sourceOverlayUrl = await pathExists(overlayPath) ? toServedUrl(path.relative(root, overlayPath)) : "";
   const methodOptions = candidates.map((candidate) => {
@@ -691,6 +795,7 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
     waistY,
     targetCoreX,
     recommended,
+    promotionTarget,
     candidates: candidates.map((candidate) => ({
       name: candidate.name,
       sheetUrl: candidate.sheetUrl,
@@ -736,6 +841,8 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
     .editor-stack { display: grid; gap: 12px; }
     .editor-row label { display: inline-flex; align-items: center; gap: 7px; color: #d8e2ec; }
     .editor-row label span { display: inline; margin-top: 0; }
+    .promotion-grid { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 8px; }
+    .promotion-grid label { display: grid; gap: 5px; color: #d8e2ec; font-size: 13px; }
     select, input { border: 1px solid #516171; border-radius: 5px; color: var(--text); background: #11161c; padding: 6px 7px; }
     input[type="number"] { width: 58px; }
     .icon-button { min-width: 38px; height: 36px; display: inline-grid; place-items: center; border: 1px solid #516171; border-radius: 6px; color: var(--text); background: #303842; cursor: pointer; }
@@ -800,7 +907,13 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
               <button class="icon-button secondary" id="restoreCandidate" type="button">Restore from candidate</button>
               <button class="icon-button finalize" id="finalizeWork" type="button">Finalize</button>
             </div>
-            <p>Save updates the working copy only. Restore resets it from the immutable candidate. Finalize opens the working copy in the viewer.</p>
+            <div class="promotion-grid">
+              <label for="promoteGame">Game <input id="promoteGame" type="text" value="${escapeHtml(promotionTarget.game)}"></label>
+              <label for="promoteCharacter">Character <input id="promoteCharacter" type="text" value="${escapeHtml(promotionTarget.character)}"></label>
+              <label for="promoteAnimation">Animation <input id="promoteAnimation" type="text" value="${escapeHtml(promotionTarget.animation)}"></label>
+            </div>
+            <p>Save updates the working copy only. Restore resets it from the immutable candidate. Finalize promotes the working copy and opens the promoted sheet.</p>
+            <div class="status" id="promotionPreview"></div>
             <div class="status" id="editorStatus"></div>
           </div>
         </div>
@@ -815,6 +928,10 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
     const frameCanvas = document.getElementById('frameCanvas');
     const frameContext = frameCanvas.getContext('2d');
     const editorStatus = document.getElementById('editorStatus');
+    const promotionPreview = document.getElementById('promotionPreview');
+    const promoteGame = document.getElementById('promoteGame');
+    const promoteCharacter = document.getElementById('promoteCharacter');
+    const promoteAnimation = document.getElementById('promoteAnimation');
     const workPlay = document.getElementById('workPlay');
     const candidateImages = new Map();
     const workImages = new Map();
@@ -832,6 +949,34 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
 
     function selectedCandidate() {
       return review.candidates.find((candidate) => candidate.name === methodSelect.value) || review.candidates[0];
+    }
+    function cleanFolderName(value, fallback) {
+      const cleaned = String(value || '').trim().replace(/[\\\\/]+/g, '_').replace(/\\s+/g, ' ');
+      return cleaned && cleaned !== '.' && cleaned !== '..' ? cleaned : fallback;
+    }
+    function cleanFileSegment(value, fallback) {
+      const cleaned = String(value || '').trim().replace(/[^A-Za-z0-9_.-]+/g, '_').replace(/^_+|_+$/g, '');
+      return cleaned || fallback;
+    }
+    function promotionTarget() {
+      return {
+        game: cleanFolderName(promoteGame.value, review.promotionTarget.game),
+        character: cleanFolderName(promoteCharacter.value, review.promotionTarget.character),
+        animation: cleanFolderName(promoteAnimation.value, review.promotionTarget.animation)
+      };
+    }
+    function promotedSheetName() {
+      const target = promotionTarget();
+      return [
+        cleanFileSegment(target.character, 'Sprite'),
+        cleanFileSegment(target.animation, 'animation'),
+        cleanFileSegment(selectedCandidate().name, 'aligned'),
+        review.frameCount + 'f_' + review.cellWidth
+      ].join('_') + '.png';
+    }
+    function updatePromotionPreview() {
+      const target = promotionTarget();
+      promotionPreview.textContent = 'Promotes to Final Sprite Sheets/' + target.game + '/' + target.character + '/' + target.animation + '/sheets/' + promotedSheetName();
     }
     function clamp(value, low, high) {
       return Math.max(low, Math.min(high, value));
@@ -1053,8 +1198,10 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
       await saveAdjustments(true);
       const payload = await postJson('/api/alignment-review/finalize', {
         reviewPath: review.reviewPath,
-        method: candidate.name
+        method: candidate.name,
+        target: promotionTarget()
       });
+      editorStatus.textContent = 'Promoted to ' + payload.promotedSheet + '.';
       window.location.href = payload.viewerUrl;
     }
     for (const candidate of review.candidates) {
@@ -1069,7 +1216,13 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
       workImage.src = candidate.workUrl;
       workImages.set(candidate.name, workImage);
     }
-    methodSelect.addEventListener('change', drawFrame);
+    methodSelect.addEventListener('change', () => {
+      drawFrame();
+      updatePromotionPreview();
+    });
+    for (const input of [promoteGame, promoteCharacter, promoteAnimation]) {
+      input.addEventListener('input', updatePromotionPreview);
+    }
     frameInput.addEventListener('change', () => setFrame(Number.parseInt(frameInput.value, 10) - 1 || 0));
     workPlay.addEventListener('click', () => setWorkPlaying(!workPlaying));
     document.getElementById('prevFrame').addEventListener('click', () => setFrame(frameIndex - 1));
@@ -1081,6 +1234,7 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
     document.getElementById('restoreCandidate').addEventListener('click', () => restoreFromCandidate().catch((error) => { editorStatus.textContent = error.message; }));
     document.getElementById('finalizeWork').addEventListener('click', () => finalizeWork().catch((error) => { editorStatus.textContent = error.message; }));
     drawFrame();
+    updatePromotionPreview();
     drawCandidateLoops();
     tickCandidateLoops();
   </script>
@@ -1231,12 +1385,40 @@ async function finalizeAlignmentReviewWorkCopy(root, body) {
     await copyFile(candidate.sheetPath, work.workPath);
   }
   const workSheet = toPosix(path.relative(root, work.workPath));
+  const fallbackTarget = await inferPromotionTarget(root, context.summary);
+  const target = promotionTargetFromBody(body && body.target, fallbackTarget);
+  const outputName = promotedSheetName(target, method, context.summary);
+  const pythonPath = await pathExists(path.join(root, ".venv", "bin", "python"))
+    ? path.join(root, ".venv", "bin", "python")
+    : "python3";
+  const scriptPath = path.join(root, "tools", "promote_sprite_sheet.py");
+  const cellSize = Array.isArray(context.summary.cell_size) ? context.summary.cell_size : [256, 256];
+  const result = await runCommand(pythonPath, [
+    scriptPath,
+    "--source", work.workPath,
+    "--game", target.game,
+    "--character", target.character,
+    "--animation", target.animation,
+    "--output-name", outputName,
+    "--frame-prefix", path.basename(outputName, path.extname(outputName)),
+    "--cell-width", String(cellSize[0] || 256),
+    "--cell-height", String(cellSize[1] || 256)
+  ], root);
+  const promotion = JSON.parse(result.stdout || "{}");
+  const promotedSheet = toPosix(promotion.output || "");
+  if (!promotedSheet) {
+    return { status: 500, payload: { error: "Promotion did not return an output sheet." } };
+  }
   return {
     status: 200,
     payload: {
       workSheet,
       workSheetUrl: toServedUrl(workSheet),
-      viewerUrl: `/sprite_viewer.html?sheet=${encodeURIComponent(workSheet)}`
+      promotedSheet,
+      promotedSheetUrl: toServedUrl(promotedSheet),
+      promotedFramesDir: toPosix(promotion.frames_dir || ""),
+      promotionReport: toPosix(promotion.report || ""),
+      viewerUrl: `/sprite_viewer.html?sheet=${encodeURIComponent(promotedSheet)}&reloadLocalStructure=1`
     }
   };
 }

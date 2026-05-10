@@ -57,7 +57,7 @@ shift so it can be manually adjusted later.
 
 ```bash
 ./.venv/bin/python isolated_workflows/vertical_frame_alignment/vertical_align_sheet.py \
-  --input "Final Sprite Sheets/TerschaTD/Hero/jump/sheets/Hero_jump_24f_256.png" \
+  --input "Final Sprite Sheets/Game1/Hero/jump/sheets/Hero_jump_24f_256.png" \
   --output-dir "isolated_workflows/vertical_frame_alignment/runs/Hero_jump_24f_256" \
   --cell-width 256 \
   --cell-height 256
@@ -80,14 +80,14 @@ not write an HTML/image report:
 
 ```bash
 ./.venv/bin/python isolated_workflows/vertical_frame_alignment/assess_vertical_alignment_need.py \
-  --input "Final Sprite Sheets/TerschaTD/Hero/jump/sheets/Hero_jump_24f_256.png"
+  --input "Final Sprite Sheets/Game1/Hero/jump/sheets/Hero_jump_24f_256.png"
 ```
 
 To request the full visual report, add `--write-report` and `--output-dir`:
 
 ```bash
 ./.venv/bin/python isolated_workflows/vertical_frame_alignment/assess_vertical_alignment_need.py \
-  --input "Final Sprite Sheets/TerschaTD/Hero/jump/sheets/Hero_jump_24f_256.png" \
+  --input "Final Sprite Sheets/Game1/Hero/jump/sheets/Hero_jump_24f_256.png" \
   --output-dir "isolated_workflows/vertical_frame_alignment/runs/Hero_jump_24f_256_assessment" \
   --write-report
 ```
@@ -108,7 +108,7 @@ alignment and prints that decision.
 
 ```bash
 ./.venv/bin/python isolated_workflows/vertical_frame_alignment/run_vertical_alignment_workflow.py \
-  --input "Final Sprite Sheets/TerschaTD/Hero/jump/sheets/Hero_jump_24f_256.png" \
+  --input "Final Sprite Sheets/Game1/Hero/jump/sheets/Hero_jump_24f_256.png" \
   --output-dir "isolated_workflows/vertical_frame_alignment/runs/Hero_jump_24f_256_workflow"
 ```
 
@@ -121,9 +121,12 @@ returns a `confirmation_gate` with `status: pending_user_confirmation` and a
 `validation_viewer` path. In normal use, open that review through the
 server-hosted sprite viewer so the navigation and manual frame-save controls are
 available. Run `node tools/serve_sprite_viewer.mjs` from the project root and
-open `/alignment-review?path=<validation_viewer_path>` in the integrated browser
-when available, or a regular browser otherwise. Present the candidates to the
-user, and do not promote an aligned sheet until the user explicitly confirms it.
+open `/alignment-review?path=<validation_viewer_path>` with the Codex integrated
+Browser tool first. Use a regular desktop browser only after the integrated
+Browser tool is unavailable or fails, and note the fallback reason. Do not use
+Playwright CLI as the default human review handoff path. Present the candidates
+to the user, and do not promote an aligned sheet until the user explicitly
+confirms it.
 Treat this review page as the alignment approval gate every time the workflow
 runs, not only when the automatic recommendation is rejected. Ask the user to
 pick the candidate and call out any remaining fixes. Each method should be
@@ -131,11 +134,12 @@ visible as a playing animation with guide lines. Candidate generation writes an
 immutable method candidate set under `candidates/` and a separate editable set
 under `working_copies/`. Manual frame nudges save only into the working copy.
 Restore from candidate replaces the working copy with the immutable candidate
-and resets the offset report. Finalize opens the current working copy in the
-sprite viewer. Attempt automatic cleanup aligns the selected method's detected
-frame bottoms to the fixed ground guide line and saves that result into the
-working copy, so it can be reviewed or restored without changing the immutable
-candidate.
+and resets the offset report. Finalize saves the current working copy, promotes
+it into `Final Sprite Sheets/<GameName>/<CharacterName>/<animation>/`, writes the
+exact matching individual frame cells, and opens the promoted sheet in the sprite
+viewer. Attempt automatic cleanup aligns the selected method's detected frame
+bottoms to the fixed ground guide line and saves that result into the working
+copy, so it can be reviewed or restored without changing the immutable candidate.
 If fixes are requested, make them as an explicit new candidate, use the hosted
 review's manual per-frame save flow, or rerun the alignment workflow, then
 return to this same candidate review gate. Do not add a second review stage for

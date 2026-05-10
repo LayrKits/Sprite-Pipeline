@@ -25,14 +25,14 @@ an HTML/image report:
 
 ```bash
 ./.venv/bin/python isolated_workflows/horizontal_frame_alignment/assess_horizontal_alignment_need.py \
-  --input "Final Sprite Sheets/TerschaTD/Wind Mage/wind_blade_effect_fresh/sheets/Wind_Mage_wind_blade_effect_fresh_24f_256.png"
+  --input "Final Sprite Sheets/Game1/Wind Mage/wind_blade_effect_fresh/sheets/Wind_Mage_wind_blade_effect_fresh_24f_256.png"
 ```
 
 To request the full visual report, add `--write-report` and `--output-dir`:
 
 ```bash
 ./.venv/bin/python isolated_workflows/horizontal_frame_alignment/assess_horizontal_alignment_need.py \
-  --input "Final Sprite Sheets/TerschaTD/Wind Mage/wind_blade_effect_fresh/sheets/Wind_Mage_wind_blade_effect_fresh_24f_256.png" \
+  --input "Final Sprite Sheets/Game1/Wind Mage/wind_blade_effect_fresh/sheets/Wind_Mage_wind_blade_effect_fresh_24f_256.png" \
   --output-dir "isolated_workflows/horizontal_frame_alignment/runs/Wind_Mage_wind_blade_effect_fresh_24f_256_assessment" \
   --write-report
 ```
@@ -53,7 +53,7 @@ alignment and prints that decision.
 
 ```bash
 ./.venv/bin/python isolated_workflows/horizontal_frame_alignment/run_horizontal_alignment_workflow.py \
-  --input "Final Sprite Sheets/TerschaTD/Wind Mage/wind_blade_effect_fresh/sheets/Wind_Mage_wind_blade_effect_fresh_24f_256.png" \
+  --input "Final Sprite Sheets/Game1/Wind Mage/wind_blade_effect_fresh/sheets/Wind_Mage_wind_blade_effect_fresh_24f_256.png" \
   --output-dir "isolated_workflows/horizontal_frame_alignment/runs/Wind_Mage_wind_blade_effect_fresh_24f_256_workflow" \
   --write-assessment-report
 ```
@@ -61,14 +61,19 @@ alignment and prints that decision.
 When stdout reports `needs_horizontal_alignment: true`, the orchestrator also
 returns a `confirmation_gate` with `status: pending_user_confirmation` and a
 `validation_viewer` path. Run `node tools/serve_sprite_viewer.mjs` from the
-project root and open `/alignment-review?path=<validation_viewer_path>` in the
-integrated browser when available, or a regular browser otherwise. Ask the user
+project root and open `/alignment-review?path=<validation_viewer_path>` with the
+Codex integrated Browser tool first. Use a regular desktop browser only after the
+integrated Browser tool is unavailable or fails, and note the fallback reason.
+Do not use Playwright CLI as the default human review handoff path. Ask the user
 to approve a candidate before promotion.
 
 Candidate generation writes immutable method candidates under `candidates/` and
 matching editable copies under `working_copies/`. Manual offsets in this
-workflow are horizontal `dx` offsets. Do not overwrite the original sheet; promote
-an approved aligned result as a new variant unless explicitly told otherwise.
+workflow are horizontal `dx` offsets. Finalize saves the working copy, promotes
+it into `Final Sprite Sheets/<GameName>/<CharacterName>/<animation>/`, writes the
+exact matching individual frame cells, and opens the promoted sheet in the
+viewer. Do not overwrite the original sheet; promote an approved aligned result
+as a new variant unless explicitly told otherwise.
 
 ## Candidate Modes
 

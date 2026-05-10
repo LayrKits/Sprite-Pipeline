@@ -151,9 +151,14 @@ root:
 node tools/serve_sprite_viewer.mjs
 ```
 
-Open the printed URL in the integrated browser when available. If an integrated
-browser is unavailable, use a regular browser. For a newly generated sheet that
-is still in `work/`, open it with the direct `sheet` query:
+Open the printed URL with the Codex integrated Browser tool first. This is the
+required first attempt for local sprite viewer and alignment review pages. Use a
+regular desktop browser only after the integrated Browser tool is unavailable or
+fails, and note the fallback reason. Do not use Safari, Chrome, macOS `open`,
+Computer Use, or Playwright CLI as the first attempt for viewer approval pages.
+Use Playwright CLI only for automated diagnostics, not as the default human
+review handoff path. For a newly generated sheet that is still in `work/`, open
+it with the direct `sheet` query:
 
 ```text
 http://127.0.0.1:8000/sprite_viewer.html?sheet=work/sheets/hero/run/hero_run_24f_256.png
