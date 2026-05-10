@@ -144,7 +144,7 @@ function layoutFromFilename(label, size) {
   if (explicit) {
     const frameCount = Number(explicit[1]);
     const frameSize = Number(explicit[2]);
-    if (frameCount > 0 && frameSize > 0 && width >= frameSize && height >= frameSize) {
+    if (frameCount > 0 && frameSize > 0 && width >= frameCount * frameSize && height >= frameSize) {
       return {
         frameWidth: frameSize,
         frameHeight: frameSize,
@@ -828,29 +828,38 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
     .top div, .metrics div, .editor { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
     b { display: block; color: #94a3b8; font-size: 12px; text-transform: uppercase; }
     span { display: block; margin-top: 4px; }
-    .source-review { display: grid; grid-template-columns: minmax(280px, .55fr) minmax(420px, 1fr); gap: 16px; align-items: start; }
+    .source-review { display: grid; grid-template-columns: minmax(240px, .45fr) minmax(0, 1fr); gap: 16px; align-items: start; }
     figure { margin: 0; }
     figcaption { color: #cbd5e1; font-size: 13px; margin-bottom: 8px; }
     img, canvas { display: block; max-width: 100%; background: #101419; border: 1px solid #39434f; border-radius: 4px; }
     canvas { image-rendering: pixelated; }
-    .editor { display: grid; gap: 12px; }
-    .editor-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .editor { display: grid; gap: 14px; overflow: hidden; }
+    .editor-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 12px; }
     .editor-header h2 { margin: 0; font-size: 16px; }
-    .editor-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .editor-grid { display: grid; grid-template-columns: minmax(256px, 320px) minmax(220px, 1fr); gap: 14px; align-items: start; }
-    .editor-stack { display: grid; gap: 12px; }
-    .editor-row label { display: inline-flex; align-items: center; gap: 7px; color: #d8e2ec; }
-    .editor-row label span { display: inline; margin-top: 0; }
-    .promotion-grid { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 8px; }
+    .method-control { display: inline-flex; align-items: center; gap: 8px; color: #d8e2ec; min-width: min(100%, 260px); }
+    .method-control select { min-width: 0; flex: 1 1 180px; }
+    .editor-grid { display: grid; grid-template-columns: minmax(224px, 288px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .work-preview { display: grid; justify-items: center; gap: 8px; min-width: 0; }
+    .work-preview figcaption { justify-self: stretch; }
+    #frameCanvas { width: min(100%, 256px); height: auto; aspect-ratio: 1 / 1; }
+    .editor-stack { display: grid; gap: 12px; min-width: 0; }
+    .control-deck { display: grid; gap: 10px; }
+    .control-cluster { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+    .control-cluster.actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); align-items: stretch; }
+    .frame-control { display: inline-flex; align-items: center; gap: 7px; color: #d8e2ec; min-width: 0; }
+    .frame-control span { display: inline; margin-top: 0; white-space: nowrap; }
+    .promotion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px; }
     .promotion-grid label { display: grid; gap: 5px; color: #d8e2ec; font-size: 13px; }
     select, input { border: 1px solid #516171; border-radius: 5px; color: var(--text); background: #11161c; padding: 6px 7px; }
+    .promotion-grid input { width: 100%; min-width: 0; }
     input[type="number"] { width: 58px; }
-    .icon-button { min-width: 38px; height: 36px; display: inline-grid; place-items: center; border: 1px solid #516171; border-radius: 6px; color: var(--text); background: #303842; cursor: pointer; }
+    .icon-button { min-width: 38px; min-height: 36px; display: inline-grid; place-items: center; border: 1px solid #516171; border-radius: 6px; color: var(--text); background: #303842; cursor: pointer; padding: 7px 10px; line-height: 1.15; text-align: center; white-space: normal; }
     .icon-button.primary { color: #10231d; background: var(--accent); border-color: var(--accent); font-weight: 750; }
-    .icon-button.secondary { min-width: 132px; }
-    .icon-button.auto { min-width: 204px; }
-    .icon-button.finalize { min-width: 92px; background: #e9b75f; border-color: #e9b75f; color: #21180a; font-weight: 750; }
-    .status { min-height: 20px; color: var(--muted); font-size: 13px; }
+    .icon-button.secondary, .icon-button.auto, .icon-button.finalize { width: 100%; min-width: 0; }
+    .icon-button.finalize { background: #e9b75f; border-color: #e9b75f; color: #21180a; font-weight: 750; }
+    .nudge-button { min-width: 44px; font-size: 18px; }
+    .status-panel { display: grid; gap: 7px; min-width: 0; }
+    .status { min-height: 20px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
     .candidate { padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
     .candidate.valid { border-color: #4fb58f; }
     .candidate.invalid { border-color: #b75b5b; }
@@ -860,7 +869,9 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
     .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 14px; }
     .candidate-media { display: grid; grid-template-columns: minmax(256px, 320px) minmax(0, .75fr) minmax(0, 1.25fr); gap: 16px; align-items: start; }
     .candidate-loop { width: 256px; height: 256px; }
-    @media (max-width: 1120px) { .source-review, .candidate-media, .editor-grid { grid-template-columns: 1fr; } .nav { align-items: flex-start; } }
+    @media (max-width: 1120px) { .source-review, .candidate-media { grid-template-columns: 1fr; } .nav { align-items: flex-start; } }
+    @media (max-width: 760px) { main { padding: 14px; } .nav { flex-wrap: wrap; padding: 10px 14px; } .editor-grid { grid-template-columns: 1fr; } .control-cluster.actions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 480px) { .control-cluster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .control-cluster.actions, .promotion-grid { grid-template-columns: 1fr; } .frame-control { grid-column: 1 / -1; } .icon-button { width: 100%; } .method-control { width: 100%; } }
   </style>
 </head>
 <body>
@@ -885,27 +896,29 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
       <section class="editor" aria-label="Manual frame review">
         <div class="editor-header">
           <h2>Working Copy</h2>
-          <label for="methodSelect">Method <select id="methodSelect">${methodOptions}</select></label>
+          <label class="method-control" for="methodSelect">Method <select id="methodSelect">${methodOptions}</select></label>
         </div>
         <div class="editor-grid">
-          <figure>
+          <figure class="work-preview">
             <figcaption>Editable working sheet with guide lines</figcaption>
             <canvas id="frameCanvas" width="${cellWidth}" height="${cellHeight}"></canvas>
           </figure>
           <div class="editor-stack">
-            <div class="editor-row">
-              <button class="icon-button primary" id="workPlay" type="button">Play</button>
-              <button class="icon-button" id="prevFrame" type="button">&lt;&lt;</button>
-              <label for="frameInput"><input id="frameInput" type="number" min="1" max="${frameCount}" value="1"> <span>of ${frameCount}</span></label>
-              <button class="icon-button" id="nextFrame" type="button">&gt;&gt;</button>
-            </div>
-            <div class="editor-row">
-              <button class="icon-button" id="nudgeNegative" type="button" title="${isHorizontal ? "Move frame left 1px" : "Move frame up 1px"}">${isHorizontal ? "←" : "↑"}</button>
-              <button class="icon-button" id="nudgePositive" type="button" title="${isHorizontal ? "Move frame right 1px" : "Move frame down 1px"}">${isHorizontal ? "→" : "↓"}</button>
-              <button class="icon-button secondary auto" id="autoCleanup" type="button">Attempt automatic cleanup</button>
-              <button class="icon-button primary" id="saveAdjustments" type="button">Save</button>
-              <button class="icon-button secondary" id="restoreCandidate" type="button">Restore from candidate</button>
-              <button class="icon-button finalize" id="finalizeWork" type="button">Finalize</button>
+            <div class="control-deck">
+              <div class="control-cluster playback" aria-label="Playback controls">
+                <button class="icon-button primary" id="workPlay" type="button">Play</button>
+                <button class="icon-button" id="prevFrame" type="button">&lt;&lt;</button>
+                <label class="frame-control" for="frameInput"><input id="frameInput" type="number" min="1" max="${frameCount}" value="1"> <span>of ${frameCount}</span></label>
+                <button class="icon-button" id="nextFrame" type="button">&gt;&gt;</button>
+                <button class="icon-button nudge-button" id="nudgeNegative" type="button" title="${isHorizontal ? "Move frame left 1px" : "Move frame up 1px"}">${isHorizontal ? "←" : "↑"}</button>
+                <button class="icon-button nudge-button" id="nudgePositive" type="button" title="${isHorizontal ? "Move frame right 1px" : "Move frame down 1px"}">${isHorizontal ? "→" : "↓"}</button>
+              </div>
+              <div class="control-cluster actions" aria-label="Working copy actions">
+                <button class="icon-button secondary auto" id="autoCleanup" type="button">Attempt automatic cleanup</button>
+                <button class="icon-button primary" id="saveAdjustments" type="button">Save</button>
+                <button class="icon-button secondary" id="restoreCandidate" type="button">Restore from candidate</button>
+                <button class="icon-button finalize" id="finalizeWork" type="button">Finalize</button>
+              </div>
             </div>
             <div class="promotion-grid">
               <label for="promoteGame">Game <input id="promoteGame" type="text" value="${escapeHtml(promotionTarget.game)}"></label>
@@ -913,8 +926,10 @@ async function renderAlignmentReviewHtml(root, reviewPathValue) {
               <label for="promoteAnimation">Animation <input id="promoteAnimation" type="text" value="${escapeHtml(promotionTarget.animation)}"></label>
             </div>
             <p>Save updates the working copy only. Restore resets it from the immutable candidate. Finalize promotes the working copy and opens the promoted sheet.</p>
-            <div class="status" id="promotionPreview"></div>
-            <div class="status" id="editorStatus"></div>
+            <div class="status-panel">
+              <div class="status" id="promotionPreview"></div>
+              <div class="status" id="editorStatus"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -1423,6 +1438,120 @@ async function finalizeAlignmentReviewWorkCopy(root, body) {
   };
 }
 
+function selectedFramesFromBody(body) {
+  const rawFrames = Array.isArray(body && body.frames)
+    ? body.frames
+    : Array.isArray(body && body.selectedFrames)
+      ? body.selectedFrames
+      : [];
+  const seen = new Set();
+  const frames = [];
+  for (const value of rawFrames) {
+    const frame = Math.trunc(Number(value));
+    if (frame > 0 && !seen.has(frame)) {
+      seen.add(frame);
+      frames.push(frame);
+    }
+  }
+  return frames;
+}
+
+function rootRelativeOutput(root, outputPath) {
+  const value = String(outputPath || "");
+  if (!value) {
+    return "";
+  }
+  const resolved = path.resolve(root, value);
+  if (path.isAbsolute(value) && isInsideRoot(root, resolved)) {
+    return toPosix(path.relative(root, resolved));
+  }
+  return toPosix(value).replace(/^\/+/, "");
+}
+
+async function saveSelectedSpriteFrames(root, body, options = {}) {
+  const sourceValue = String(body && (body.sourcePath || body.source) ? body.sourcePath || body.source : "").trim();
+  if (!sourceValue || /^[a-z]+:/i.test(sourceValue)) {
+    return { status: 400, payload: { error: "Choose a server-hosted sprite sheet before saving selected frames." } };
+  }
+  const sourceRel = decodeURIComponent(sourceValue).replace(/^\/+/, "");
+  const sourcePath = path.resolve(root, sourceRel);
+  if (!isInsideRoot(root, sourcePath) || !(await pathExists(sourcePath))) {
+    return { status: 400, payload: { error: "Source sprite sheet was not found." } };
+  }
+
+  const frames = selectedFramesFromBody(body);
+  if (!frames.length) {
+    return { status: 400, payload: { error: "Select at least one frame before saving." } };
+  }
+
+  const cellWidth = Math.max(1, Math.trunc(Number(body && body.cellWidth) || 256));
+  const cellHeight = Math.max(1, Math.trunc(Number(body && body.cellHeight) || 256));
+  const rowIndex = Math.max(0, Math.trunc(Number(body && body.rowIndex) || 0));
+  const sourceRelativePath = toPosix(path.relative(root, sourcePath));
+  const fallbackTarget = await inferPromotionTarget(root, { input: sourceRelativePath });
+  const target = promotionTargetFromBody(body && body.target, fallbackTarget);
+
+  const pythonPath = await pathExists(path.join(root, ".venv", "bin", "python"))
+    ? path.join(root, ".venv", "bin", "python")
+    : "python3";
+  const scriptPath = path.join(root, "tools", "save_selected_sprite_frames.py");
+  const scriptArgs = [
+    scriptPath,
+    "--source", sourcePath,
+    "--frames", frames.join(","),
+    "--game", target.game,
+    "--character", target.character,
+    "--animation", target.animation,
+    "--cell-width", String(cellWidth),
+    "--cell-height", String(cellHeight),
+    "--row-index", String(rowIndex)
+  ];
+  if (options.replaceSource) {
+    scriptArgs.push("--replace-source");
+  }
+  try {
+    const result = await runCommand(pythonPath, scriptArgs, root);
+    const promotion = JSON.parse(result.stdout || "{}");
+    const savedSheet = rootRelativeOutput(root, promotion.output);
+    if (!savedSheet) {
+      return { status: 500, payload: { error: "Selected frame save did not return an output sheet." } };
+    }
+    const savedPath = path.resolve(root, savedSheet);
+    const extension = path.extname(savedPath).toLowerCase();
+    const label = path.basename(savedPath, extension);
+    const size = await imageSize(savedPath);
+    const fileStat = await stat(savedPath);
+    const sheet = {
+      label,
+      path: savedSheet,
+      folder: toPosix(path.dirname(savedSheet)),
+      game: target.game,
+      character: target.character,
+      animation: target.animation,
+      width: size.width,
+      height: size.height,
+      ...layoutFromFilename(label, size),
+      bytes: fileStat.size,
+      modified: fileStat.mtimeMs / 1000
+    };
+    return {
+      status: 200,
+      payload: {
+        savedSheet,
+        savedSheetUrl: toServedUrl(savedSheet),
+        savedFramesDir: rootRelativeOutput(root, promotion.frames_dir),
+        savedReport: rootRelativeOutput(root, promotion.report),
+        replacedSource: Boolean(options.replaceSource),
+        selectedFrames: frames,
+        sheet,
+        viewerUrl: `/sprite_viewer.html?sheet=${encodeURIComponent(savedSheet)}&reloadLocalStructure=1`
+      }
+    };
+  } catch (error) {
+    return { status: 500, payload: { error: error && error.message ? error.message : "Could not save selected frames." } };
+  }
+}
+
 function sendJson(response, statusCode, payload) {
   const body = Buffer.from(JSON.stringify(payload, null, 2));
   response.writeHead(statusCode, {
@@ -1492,6 +1621,16 @@ async function handleRequest(request, response, root) {
   }
   if (url.pathname === "/api/sprite-sheets") {
     sendJson(response, 200, { sheets: await collectSpriteSheets(root) });
+    return;
+  }
+  if (request.method === "POST" && url.pathname === "/api/selected-frames/save") {
+    const result = await saveSelectedSpriteFrames(root, await readRequestJson(request));
+    sendJson(response, result.status, result.payload);
+    return;
+  }
+  if (request.method === "POST" && url.pathname === "/api/selected-frames/overwrite") {
+    const result = await saveSelectedSpriteFrames(root, await readRequestJson(request), { replaceSource: true });
+    sendJson(response, result.status, result.payload);
     return;
   }
   if (request.method === "POST" && url.pathname === "/api/alignment-review/save") {

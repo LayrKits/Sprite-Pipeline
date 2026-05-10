@@ -176,8 +176,17 @@ open the alignment page instead of the plain sheet viewer:
 http://127.0.0.1:8000/alignment-review?path=<validation_viewer_path>
 ```
 
+After the server is running, always include a Markdown link to the exact review
+URL in the assistant response so Codex renders the Web preview card with an
+`Open` button. Use `open alignment review` for alignment candidate pages and
+`open sprite viewer` for plain sheet review pages:
+
+```markdown
+[open alignment review](http://127.0.0.1:8000/alignment-review?path=<validation_viewer_path>)
+```
+
 Ask the user to approve the viewed sheet or alignment candidate before
-promotion.
+promotion, and keep the server running for review.
 
 Refresh the static pinned-gallery manifest only when intentionally updating
 `sprite_gallery_manifest.js` from `sprite_gallery_pins.json`:

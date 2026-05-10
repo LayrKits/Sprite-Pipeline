@@ -72,7 +72,10 @@ sprite strip out.
    ```
 
 6. Open the printed local URL in a browser to inspect the generated sheet or
-   promoted final sheets.
+   promoted final sheets. Assistants should also return a Markdown link to the
+   exact review URL, such as `[open sprite viewer](http://127.0.0.1:8000/...)`
+   or `[open alignment review](http://127.0.0.1:8000/alignment-review?path=...)`,
+   so Codex shows the Web preview card with an `Open` button.
 7. If using an AI assistant, give it
    `skills/sprite-sheet-pipeline/SKILL.md` or install that folder in the
    assistant's skill system. Ask it to use the `sprite-sheet-pipeline` skill.

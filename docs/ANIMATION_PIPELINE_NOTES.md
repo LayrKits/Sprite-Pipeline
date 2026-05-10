@@ -169,8 +169,18 @@ When vertical or horizontal alignment has run and the workflow returns a
 http://127.0.0.1:8000/alignment-review?path=<validation_viewer_path>
 ```
 
+After the server is running, always include a Markdown link to the exact review
+URL in the assistant response so Codex renders the Web preview card with an
+`Open` button. Use `open alignment review` for alignment candidate pages and
+`open sprite viewer` for plain sheet review pages:
+
+```markdown
+[open alignment review](http://127.0.0.1:8000/alignment-review?path=<validation_viewer_path>)
+```
+
 The viewer gate is mandatory before promotion. Present the running animation or
-alignment candidates to the user and ask for approval or requested fixes.
+alignment candidates plus the Web preview link to the user, keep the server
+running for review, and ask for approval or requested fixes.
 
 ## Background Modes
 

@@ -405,6 +405,18 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .frame-selector-action {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 132px;
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+
+    .frame-selector-overwrite {
+      min-width: 72px;
+    }
+
     .frame-selector-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
@@ -472,6 +484,154 @@
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 6px;
+    }
+
+    .save-modal {
+      width: min(520px, calc(100vw - 28px));
+      max-height: calc(100vh - 28px);
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+    }
+
+    .save-modal::backdrop {
+      background: rgba(5, 8, 12, 0.68);
+    }
+
+    .save-modal form {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .save-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .save-modal-header h2 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .save-modal-fields {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .save-modal-fields label,
+    .save-frame-info {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .save-modal-fields span,
+    .save-frame-info b {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    .save-modal-fields input {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--text);
+      background: #15181c;
+      padding: 8px 9px;
+    }
+
+    .save-frame-info {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #20242a;
+    }
+
+    .save-frame-count {
+      color: var(--text);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .save-frame-list {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .save-modal-status {
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .save-modal-status a {
+      color: #a8d9ff;
+    }
+
+    .overwrite-warning {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid color-mix(in srgb, var(--danger), transparent 18%);
+      border-radius: 8px;
+      color: #ffe6e6;
+      background: rgba(216, 117, 117, 0.13);
+      line-height: 1.4;
+    }
+
+    .overwrite-warning strong {
+      color: #ffd1d1;
+    }
+
+    .overwrite-path {
+      padding: 8px;
+      overflow-wrap: anywhere;
+      border-radius: 6px;
+      color: #dce5ee;
+      background: rgba(0, 0, 0, 0.18);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .save-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 18px;
+    }
+
+    .save-modal-actions .icon-button {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 84px;
+      padding: 0 14px;
+      white-space: nowrap;
+    }
+
+    .save-modal-actions .danger-action {
+      min-width: 148px;
+      color: #250d0d;
+      border-color: #f08d8d;
+      background: #f08d8d;
+      font-weight: 800;
     }
 
     .structure-actions {
@@ -617,6 +777,19 @@
       .alignment-note {
         max-width: min(100%, 360px);
       }
+
+      .save-modal-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .save-modal-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .save-modal-actions .icon-button {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -651,11 +824,61 @@
         <div class="frame-selector-bar">
           <button class="icon-button" id="selectAllFramesButton" type="button" title="Select all frames" aria-label="Select all frames">✓</button>
           <button class="icon-button" id="invertFramesButton" type="button" title="Invert frame selection" aria-label="Invert frame selection">↕</button>
+          <button class="icon-button frame-selector-action" id="saveSelectedFramesButton" type="button" title="Extract selected frames into a new sprite sheet" aria-label="Extract selected frames">Extract frames...</button>
+          <button class="icon-button frame-selector-action frame-selector-overwrite" id="overwriteSelectedFramesButton" type="button" title="Overwrite the current sprite sheet with selected frames" aria-label="Save selected frames over current sheet">Save</button>
           <div class="frame-selector-summary" id="frameSelectionSummary">0 / 0</div>
         </div>
         <div class="frame-selector-grid" id="frameGrid" aria-label="Frame selection"></div>
       </div>
     </section>
+
+    <dialog class="save-modal" id="saveFramesModal" aria-labelledby="saveFramesTitle">
+      <form id="saveFramesForm" method="dialog">
+        <div class="save-modal-header">
+          <h2 id="saveFramesTitle">Save Selected Frames</h2>
+          <button class="icon-button" id="closeSaveFramesButton" type="button" title="Close" aria-label="Close">×</button>
+        </div>
+        <div class="save-modal-fields">
+          <label for="saveGameInput"><span>Game</span><input id="saveGameInput" type="text" autocomplete="off"></label>
+          <label for="saveCharacterInput"><span>Character</span><input id="saveCharacterInput" type="text" autocomplete="off"></label>
+          <label for="saveAnimationInput"><span>Animation</span><input id="saveAnimationInput" type="text" autocomplete="off"></label>
+        </div>
+        <div class="save-frame-info">
+          <b>Selected frames</b>
+          <div class="save-frame-count" id="saveFramesCount">0 frames</div>
+          <div class="save-frame-list" id="saveFramesList"></div>
+        </div>
+        <div class="save-modal-status" id="saveFramesStatus"></div>
+        <div class="save-modal-actions">
+          <button class="icon-button" id="cancelSaveFramesButton" type="button">Cancel</button>
+          <button class="icon-button primary" id="confirmSaveFramesButton" type="button">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="save-modal" id="overwriteFramesModal" aria-labelledby="overwriteFramesTitle">
+      <form id="overwriteFramesForm" method="dialog">
+        <div class="save-modal-header">
+          <h2 id="overwriteFramesTitle">Overwrite Sprite Sheet</h2>
+          <button class="icon-button" id="closeOverwriteFramesButton" type="button" title="Close" aria-label="Close">×</button>
+        </div>
+        <div class="overwrite-warning">
+          <strong>This will replace the currently loaded sprite sheet.</strong>
+          <div>The sheet will be rewritten with only the selected frames. Matching individual frame cells will also be written for this frame count when the sheet is in the final sprite folder structure.</div>
+          <div class="overwrite-path" id="overwriteFramesPath"></div>
+        </div>
+        <div class="save-frame-info">
+          <b>Selected frames</b>
+          <div class="save-frame-count" id="overwriteFramesCount">0 frames</div>
+          <div class="save-frame-list" id="overwriteFramesList"></div>
+        </div>
+        <div class="save-modal-status" id="overwriteFramesStatus"></div>
+        <div class="save-modal-actions">
+          <button class="icon-button" id="cancelOverwriteFramesButton" type="button">Cancel</button>
+          <button class="icon-button danger-action" id="confirmOverwriteFramesButton" type="button">Confirm overwrite</button>
+        </div>
+      </form>
+    </dialog>
 
     <aside class="side">
       <div class="side-header">
@@ -825,8 +1048,28 @@
     const frameTray = document.getElementById("frameTray");
     const selectAllFramesButton = document.getElementById("selectAllFramesButton");
     const invertFramesButton = document.getElementById("invertFramesButton");
+    const saveSelectedFramesButton = document.getElementById("saveSelectedFramesButton");
+    const overwriteSelectedFramesButton = document.getElementById("overwriteSelectedFramesButton");
     const frameSelectionSummary = document.getElementById("frameSelectionSummary");
     const frameGrid = document.getElementById("frameGrid");
+    const saveFramesModal = document.getElementById("saveFramesModal");
+    const saveGameInput = document.getElementById("saveGameInput");
+    const saveCharacterInput = document.getElementById("saveCharacterInput");
+    const saveAnimationInput = document.getElementById("saveAnimationInput");
+    const saveFramesCount = document.getElementById("saveFramesCount");
+    const saveFramesList = document.getElementById("saveFramesList");
+    const saveFramesStatus = document.getElementById("saveFramesStatus");
+    const confirmSaveFramesButton = document.getElementById("confirmSaveFramesButton");
+    const closeSaveFramesButton = document.getElementById("closeSaveFramesButton");
+    const cancelSaveFramesButton = document.getElementById("cancelSaveFramesButton");
+    const overwriteFramesModal = document.getElementById("overwriteFramesModal");
+    const overwriteFramesPath = document.getElementById("overwriteFramesPath");
+    const overwriteFramesCount = document.getElementById("overwriteFramesCount");
+    const overwriteFramesList = document.getElementById("overwriteFramesList");
+    const overwriteFramesStatus = document.getElementById("overwriteFramesStatus");
+    const confirmOverwriteFramesButton = document.getElementById("confirmOverwriteFramesButton");
+    const closeOverwriteFramesButton = document.getElementById("closeOverwriteFramesButton");
+    const cancelOverwriteFramesButton = document.getElementById("cancelOverwriteFramesButton");
     const pinButton = document.getElementById("pinButton");
     const alignmentReviewLink = document.getElementById("alignmentReviewLink");
     const playButton = document.getElementById("playButton");
@@ -953,10 +1196,15 @@
       if (!match) {
         return null;
       }
+      const frameCount = positiveInteger(match[1], 1);
+      const frameSize = positiveInteger(match[2], 256);
+      if (state.imageLoaded && state.image.naturalWidth < frameCount * frameSize) {
+        return null;
+      }
       return {
-        frameCount: positiveInteger(match[1], 1),
-        frameWidth: positiveInteger(match[2], 256),
-        frameHeight: positiveInteger(match[2], 256)
+        frameCount,
+        frameWidth: frameSize,
+        frameHeight: frameSize
       };
     }
 
@@ -1081,6 +1329,49 @@
 
     function currentSheet() {
       return sheetByPath(state.currentPath);
+    }
+
+    function cleanFolderName(value, fallback) {
+      const cleaned = String(value || "").trim().replace(/[\\/]+/g, "_").replace(/\s+/g, " ");
+      return cleaned && cleaned !== "." && cleaned !== ".." ? cleaned : fallback;
+    }
+
+    function stemFromPath(value) {
+      const basename = String(value || "").split("/").pop() || "";
+      return basename.replace(/\.(png|webp|jpe?g)$/i, "");
+    }
+
+    function inferSaveTarget() {
+      const sheet = currentSheet();
+      const path = String(state.currentPath || (sheet && sheet.path) || "");
+      const parts = path.split("/");
+      let game = sheet && sheet.game ? sheet.game : "";
+      let character = sheet && sheet.character ? sheet.character : "";
+      let animation = sheet && sheet.animation ? sheet.animation : "";
+
+      if (parts[0] === "Final Sprite Sheets") {
+        game = game || parts[1] || "";
+        character = character || parts[2] || "";
+        animation = animation || parts[3] || "";
+      } else if (parts[0] === "work" && parts[1] === "sheets") {
+        character = character || parts[2] || "";
+        animation = animation || parts[3] || "";
+      }
+
+      if (!game && gameSelect.value && gameSelect.value !== LAST_GAME_VALUE) {
+        game = gameSelect.value;
+      }
+      if (!game) {
+        game = unique(SHEETS.map((item) => item.game))[0] || "Unsorted";
+      }
+      if (!animation && path) {
+        animation = stemFromPath(path).replace(/_\d+f_\d+(?:\D.*)?$/i, "");
+      }
+      return {
+        game: cleanFolderName(game, "Unsorted"),
+        character: cleanFolderName(character, "Sprite"),
+        animation: cleanFolderName(animation, "animation")
+      };
     }
 
     function alignmentLink(sheet) {
@@ -1303,6 +1594,175 @@
       warning.classList.toggle("visible", Boolean(message));
     }
 
+    async function postJson(url, payload) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.error || "Request failed.");
+      }
+      return body;
+    }
+
+    function updateSaveFramesSummary() {
+      const frames = selectedFrameNumbers();
+      saveFramesCount.textContent = `${frames.length} selected frame${frames.length === 1 ? "" : "s"}`;
+      saveFramesList.textContent = frames.join(", ");
+    }
+
+    function updateOverwriteFramesSummary() {
+      const frames = selectedFrameNumbers();
+      overwriteFramesCount.textContent = `${frames.length} selected frame${frames.length === 1 ? "" : "s"}`;
+      overwriteFramesList.textContent = frames.join(", ");
+      overwriteFramesPath.textContent = state.currentPath || "No sheet loaded";
+    }
+
+    function showSaveFramesModal() {
+      normalizeFrameSelection();
+      if (!canSaveSelectedFrames()) {
+        setWarning("Selected frame saving needs a server-hosted sheet. Start tools/serve_sprite_viewer.mjs and load a sheet from the local viewer.");
+        return;
+      }
+      const target = inferSaveTarget();
+      saveGameInput.value = target.game;
+      saveCharacterInput.value = target.character;
+      saveAnimationInput.value = target.animation;
+      saveFramesStatus.textContent = "";
+      updateSaveFramesSummary();
+      if (typeof saveFramesModal.showModal === "function") {
+        saveFramesModal.showModal();
+      } else {
+        saveFramesModal.setAttribute("open", "");
+      }
+      saveGameInput.focus();
+      saveGameInput.select();
+    }
+
+    function closeSaveFramesModal() {
+      if (typeof saveFramesModal.close === "function") {
+        saveFramesModal.close();
+      } else {
+        saveFramesModal.removeAttribute("open");
+      }
+    }
+
+    function showOverwriteFramesModal() {
+      normalizeFrameSelection();
+      if (!canOverwriteSelectedFrames()) {
+        setWarning("Overwriting selected frames needs a server-hosted sheet. Start tools/serve_sprite_viewer.mjs and load a sheet from the local viewer.");
+        return;
+      }
+      overwriteFramesStatus.textContent = "";
+      updateOverwriteFramesSummary();
+      if (typeof overwriteFramesModal.showModal === "function") {
+        overwriteFramesModal.showModal();
+      } else {
+        overwriteFramesModal.setAttribute("open", "");
+      }
+      confirmOverwriteFramesButton.focus();
+    }
+
+    function closeOverwriteFramesModal() {
+      if (typeof overwriteFramesModal.close === "function") {
+        overwriteFramesModal.close();
+      } else {
+        overwriteFramesModal.removeAttribute("open");
+      }
+    }
+
+    function upsertSavedSheet(sheet) {
+      if (!sheet || !sheet.path) {
+        return null;
+      }
+      const normalized = normalizeSheetList([{ ...sheet }, ...SHEETS.filter((item) => item.path !== sheet.path)]);
+      SHEETS = normalized;
+      renderGallery();
+      populateGameOptions(sheet.game || LAST_GAME_VALUE);
+      if (sheet.game) {
+        populateCharacterOptions(sheet.character || "");
+        populateAnimationOptions(sheet.path);
+      }
+      return SHEETS.find((item) => item.path === sheet.path) || sheet;
+    }
+
+    async function saveSelectedFrames() {
+      const frames = selectedFrameNumbers();
+      if (!frames.length) {
+        setWarning("Select at least one frame before saving.");
+        return;
+      }
+      confirmSaveFramesButton.disabled = true;
+      confirmSaveFramesButton.textContent = "Saving...";
+      saveFramesStatus.textContent = "Saving selected frames...";
+      try {
+        const payload = await postJson("api/selected-frames/save", {
+          sourcePath: state.currentPath,
+          frames,
+          cellWidth: state.frameWidth,
+          cellHeight: state.frameHeight,
+          rowIndex: state.rowIndex,
+          target: {
+            game: saveGameInput.value,
+            character: saveCharacterInput.value,
+            animation: saveAnimationInput.value
+          }
+        });
+        const savedSheet = upsertSavedSheet({ ...payload.sheet, src: payload.savedSheetUrl });
+        if (savedSheet) {
+          loadImage(sheetSrc(savedSheet), savedSheet.path, savedSheet);
+        }
+        saveFramesStatus.textContent = "";
+        const savedLink = document.createElement("a");
+        savedLink.href = payload.savedSheetUrl;
+        savedLink.textContent = payload.savedSheet;
+        saveFramesStatus.append(
+          `Saved ${payload.selectedFrames.length} frame${payload.selectedFrames.length === 1 ? "" : "s"} to `,
+          savedLink,
+          "."
+        );
+        setWarning(`Saved selected frames to ${payload.savedSheet}.`);
+      } catch (error) {
+        saveFramesStatus.textContent = error && error.message ? error.message : "Could not save selected frames.";
+      } finally {
+        confirmSaveFramesButton.disabled = false;
+        confirmSaveFramesButton.textContent = "Save";
+      }
+    }
+
+    async function overwriteSelectedFrames() {
+      const frames = selectedFrameNumbers();
+      if (!frames.length) {
+        setWarning("Select at least one frame before saving.");
+        return;
+      }
+      confirmOverwriteFramesButton.disabled = true;
+      confirmOverwriteFramesButton.textContent = "Saving...";
+      overwriteFramesStatus.textContent = "Overwriting current sheet...";
+      try {
+        const payload = await postJson("api/selected-frames/overwrite", {
+          sourcePath: state.currentPath,
+          frames,
+          cellWidth: state.frameWidth,
+          cellHeight: state.frameHeight,
+          rowIndex: state.rowIndex
+        });
+        const savedSheet = upsertSavedSheet({ ...payload.sheet, src: `${payload.savedSheetUrl}?v=${Date.now()}` });
+        if (savedSheet) {
+          loadImage(sheetSrc(savedSheet), savedSheet.path, savedSheet);
+        }
+        closeOverwriteFramesModal();
+        setWarning(`Overwrote ${payload.savedSheet} with ${payload.selectedFrames.length} selected frame${payload.selectedFrames.length === 1 ? "" : "s"}.`);
+      } catch (error) {
+        overwriteFramesStatus.textContent = error && error.message ? error.message : "Could not overwrite the current sheet.";
+      } finally {
+        confirmOverwriteFramesButton.disabled = false;
+        confirmOverwriteFramesButton.textContent = "Confirm overwrite";
+      }
+    }
+
     function inferFrameCount() {
       if (!state.imageLoaded || state.frameWidth < 1) {
         return state.frameCount;
@@ -1345,6 +1805,26 @@
       return state.selectedFrames.reduce((total, selected) => total + (selected ? 1 : 0), 0);
     }
 
+    function selectedFrameNumbers() {
+      return state.selectedFrames
+        .map((selected, index) => selected ? index + 1 : null)
+        .filter((frame) => frame !== null);
+    }
+
+    function canSaveSelectedFrames(selectedCount = selectedFrameCount()) {
+      return Boolean(
+        state.imageLoaded &&
+        selectedCount > 0 &&
+        state.currentPath &&
+        window.location.protocol !== "file:" &&
+        !/^[a-z]+:/i.test(state.currentPath)
+      );
+    }
+
+    function canOverwriteSelectedFrames(selectedCount = selectedFrameCount()) {
+      return canSaveSelectedFrames(selectedCount);
+    }
+
     function nextSelectedFrameFrom(index, delta) {
       normalizeFrameSelection();
       if (state.frameCount <= 1) {
@@ -1370,6 +1850,8 @@
       frameSelectionSummary.textContent = `${selectedCount} / ${state.frameCount}`;
       selectAllFramesButton.disabled = selectedCount === state.frameCount;
       invertFramesButton.disabled = state.frameCount <= 1;
+      saveSelectedFramesButton.disabled = !canSaveSelectedFrames(selectedCount);
+      overwriteSelectedFramesButton.disabled = !canOverwriteSelectedFrames(selectedCount);
       for (const item of frameGrid.querySelectorAll(".frame-cell")) {
         const index = Number(item.dataset.frameIndex);
         const selected = Boolean(state.selectedFrames[index]);
@@ -1749,18 +2231,21 @@
     }
 
     function applySheetDimensions(sheet) {
-      const sheetWidth = positiveInteger(sheet && sheet.width, state.imageLoaded ? state.image.naturalWidth : 0);
-      const sheetHeight = positiveInteger(sheet && sheet.height, state.imageLoaded ? state.image.naturalHeight : 0);
+      const imageWidth = state.imageLoaded ? state.image.naturalWidth : 0;
+      const imageHeight = state.imageLoaded ? state.image.naturalHeight : 0;
+      const sheetWidth = positiveInteger(imageWidth, positiveInteger(sheet && sheet.width, 0));
+      const sheetHeight = positiveInteger(imageHeight, positiveInteger(sheet && sheet.height, 0));
       if (sheetWidth < 1 || sheetHeight < 1) {
         return false;
       }
       const inferred = inferFrameSizeFromImage(sheet);
-      state.frameWidth = positiveInteger(sheet && sheet.frameWidth, inferred ? inferred.frameWidth : sheetHeight);
-      state.frameHeight = positiveInteger(sheet && sheet.frameHeight, inferred ? inferred.frameHeight : sheetHeight);
+      state.frameWidth = positiveInteger(inferred && inferred.frameWidth, positiveInteger(sheet && sheet.frameWidth, sheetHeight));
+      state.frameHeight = positiveInteger(inferred && inferred.frameHeight, positiveInteger(sheet && sheet.frameHeight, sheetHeight));
       state.frameCount = positiveInteger(
-        sheet && sheet.frameCount,
-        inferred ? inferred.frameCount : Math.max(1, Math.floor(sheetWidth / state.frameWidth))
+        inferred && inferred.frameCount,
+        positiveInteger(sheet && sheet.frameCount, Math.max(1, Math.floor(sheetWidth / state.frameWidth)))
       );
+      state.frameCount = Math.min(state.frameCount, Math.max(1, Math.floor(sheetWidth / state.frameWidth)));
       state.rowCount = positiveInteger(sheet && sheet.rowCount, Math.max(1, Math.floor(sheetHeight / state.frameHeight)));
       state.rowLabels = Array.isArray(sheet && sheet.rowLabels)
         ? sheet.rowLabels.slice(0, state.rowCount)
@@ -2067,6 +2552,24 @@
     });
     selectAllFramesButton.addEventListener("click", selectAllFrames);
     invertFramesButton.addEventListener("click", invertFrameSelection);
+    saveSelectedFramesButton.addEventListener("click", showSaveFramesModal);
+    overwriteSelectedFramesButton.addEventListener("click", showOverwriteFramesModal);
+    confirmSaveFramesButton.addEventListener("click", saveSelectedFrames);
+    closeSaveFramesButton.addEventListener("click", closeSaveFramesModal);
+    cancelSaveFramesButton.addEventListener("click", closeSaveFramesModal);
+    saveFramesModal.addEventListener("click", (event) => {
+      if (event.target === saveFramesModal) {
+        closeSaveFramesModal();
+      }
+    });
+    confirmOverwriteFramesButton.addEventListener("click", overwriteSelectedFrames);
+    closeOverwriteFramesButton.addEventListener("click", closeOverwriteFramesModal);
+    cancelOverwriteFramesButton.addEventListener("click", closeOverwriteFramesModal);
+    overwriteFramesModal.addEventListener("click", (event) => {
+      if (event.target === overwriteFramesModal) {
+        closeOverwriteFramesModal();
+      }
+    });
     reloadLocalStructureButton.addEventListener("click", () => {
       reloadLocalStructure();
     });

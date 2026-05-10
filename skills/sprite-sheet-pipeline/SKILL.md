@@ -88,9 +88,13 @@ Normal processing order:
 6. Run `node tools/serve_sprite_viewer.mjs` and open the generated sheet with
    the Codex integrated Browser tool first. Use a regular desktop browser only
    after the integrated Browser tool is unavailable or fails. Do not use
-   Playwright CLI as the default human review handoff path.
+   Playwright CLI as the default human review handoff path. After the server is
+   running, include a Markdown link to the exact review URL in your response so
+   Codex shows a Web preview card with an `Open` button. Use the link label
+   `open sprite viewer` for normal review pages.
 7. If vertical or horizontal alignment ran, open the server-hosted alignment
-   review page instead of the plain sheet viewer.
+   review page instead of the plain sheet viewer, and include a Markdown link
+   labeled `open alignment review`.
 8. Promote only approved sheets and matching cell frames into
    `Final Sprite Sheets/<GameName>/<CharacterName>/<animation>/`.
 

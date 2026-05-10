@@ -16,7 +16,7 @@ Default production path:
 - optional matting
 - `tools/animation_pipeline.py`
 - preview/report review
-- server-hosted viewer review
+- server-hosted viewer review with a Markdown web-preview link
 - promote approved outputs
 
 Use `--layout-mode preserve-canvas` for normal video-derived sheets. Use
@@ -280,8 +280,17 @@ server-hosted route:
 http://127.0.0.1:8000/alignment-review?path=<validation_viewer_path>
 ```
 
-Present the viewer page to the user before promotion and ask for approval or
-requested fixes.
+After the server is running, always include a Markdown link to the exact review
+URL in the assistant response so Codex renders the Web preview card with an
+`Open` button. Use the label `open alignment review` for alignment candidate
+pages and `open sprite viewer` for plain sheet review pages, for example:
+
+```markdown
+[open alignment review](http://127.0.0.1:8000/alignment-review?path=<validation_viewer_path>)
+```
+
+Present the viewer page and the Web preview link to the user before promotion,
+keep the server running for review, and ask for approval or requested fixes.
 
 ## Vertical Alignment Assessment
 

@@ -1,0 +1,256 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - link "Back to viewer" [ref=e3] [cursor=pointer]:
+      - /url: /sprite_viewer.html
+    - heading "Vertical Alignment Candidate Review" [level=1] [ref=e4]
+  - main [ref=e5]:
+    - paragraph [ref=e6]:
+      - generic [ref=e7]: "Confirmation required:"
+      - text: pick a candidate and note any fixes before promotion.
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: Recommended
+        - generic [ref=e11]: waist_floor_clamped
+      - generic [ref=e12]:
+        - generic [ref=e13]: Lowest score
+        - generic [ref=e14]: waist_floor_clamped
+      - generic [ref=e15]:
+        - generic [ref=e16]: Ground Y
+        - generic [ref=e17]: "207"
+      - generic [ref=e18]:
+        - generic [ref=e19]: Target waist Y
+        - generic [ref=e20]: "157"
+      - generic [ref=e21]:
+        - generic [ref=e22]: Frames
+        - generic [ref=e23]: "24"
+    - generic [ref=e24]:
+      - figure "Original copied sheet overlay" [ref=e25]:
+        - generic [ref=e26]: Original copied sheet overlay
+        - img "Original copied sheet overlay" [ref=e27]
+      - region "Manual frame review" [ref=e28]:
+        - generic [ref=e29]:
+          - heading "Working Copy" [level=2] [ref=e30]
+          - generic [ref=e31]:
+            - text: Method
+            - combobox "Method" [ref=e32]:
+              - option "waist floor clamped (recommended)" [selected]
+              - option "blend 50"
+              - option "blend 35"
+              - option "capped 24"
+              - option "capped 12"
+              - option "strict waist"
+        - generic [ref=e33]:
+          - figure "Editable working sheet with guide lines" [ref=e34]:
+            - generic [ref=e35]: Editable working sheet with guide lines
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - generic "Playback controls" [ref=e39]:
+                - button "Play" [ref=e40] [cursor=pointer]
+                - button "<<" [ref=e41] [cursor=pointer]
+                - generic [ref=e42]:
+                  - spinbutton "of 24" [ref=e43]: "1"
+                  - generic [ref=e44]: of 24
+                - button ">>" [ref=e45] [cursor=pointer]
+                - button "↑" [ref=e46] [cursor=pointer]
+                - button "↓" [ref=e47] [cursor=pointer]
+              - generic "Working copy actions" [ref=e48]:
+                - button "Attempt automatic cleanup" [ref=e49] [cursor=pointer]
+                - button "Save" [ref=e50] [cursor=pointer]
+                - button "Restore from candidate" [ref=e51] [cursor=pointer]
+                - button "Finalize" [ref=e52] [cursor=pointer]
+            - generic [ref=e53]:
+              - generic [ref=e54]:
+                - text: Game
+                - textbox "Game" [ref=e55]: Gorilla
+              - generic [ref=e56]:
+                - text: Character
+                - textbox "Character" [ref=e57]: Hero
+              - generic [ref=e58]:
+                - text: Animation
+                - textbox "Animation" [ref=e59]: jump_20260506
+            - paragraph [ref=e60]: Save updates the working copy only. Restore resets it from the immutable candidate. Finalize promotes the working copy and opens the promoted sheet.
+            - generic [ref=e61]:
+              - generic [ref=e62]: Promotes to Final Sprite Sheets/Gorilla/Hero/jump_20260506/sheets/Hero_jump_20260506_waist_floor_clamped_24f_256.png
+              - generic [ref=e63]: waist floor clamped frame 1 dy 0px
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - heading "waist floor clamped" [level=2] [ref=e66]
+        - generic [ref=e67]: recommended
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]: Status
+          - generic [ref=e71]: valid
+        - generic [ref=e72]:
+          - generic [ref=e73]: Score
+          - generic [ref=e74]: "19.195"
+        - generic [ref=e75]:
+          - generic [ref=e76]: Waist stddev
+          - generic [ref=e77]: "16.437"
+        - generic [ref=e78]:
+          - generic [ref=e79]: Floor penetration
+          - generic [ref=e80]: 0 px
+        - generic [ref=e81]:
+          - generic [ref=e82]: Baseline fixes
+          - generic [ref=e83]: "1"
+        - generic [ref=e84]:
+          - generic [ref=e85]: Max shift
+          - generic [ref=e86]: 41 px
+      - generic [ref=e87]:
+        - figure "Animated candidate" [ref=e88]:
+          - generic [ref=e89]: Animated candidate
+        - figure "Overlay" [ref=e91]:
+          - generic [ref=e92]: Overlay
+          - img "waist_floor_clamped overlay" [ref=e93]
+        - figure "Contact sheet" [ref=e94]:
+          - generic [ref=e95]: Contact sheet
+          - img "waist_floor_clamped contact sheet" [ref=e96]
+    - generic [ref=e97]:
+      - heading "blend 50" [level=2] [ref=e99]
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - generic [ref=e102]: Status
+          - generic [ref=e103]: valid
+        - generic [ref=e104]:
+          - generic [ref=e105]: Score
+          - generic [ref=e106]: "19.596"
+        - generic [ref=e107]:
+          - generic [ref=e108]: Waist stddev
+          - generic [ref=e109]: "16.929"
+        - generic [ref=e110]:
+          - generic [ref=e111]: Floor penetration
+          - generic [ref=e112]: 0 px
+        - generic [ref=e113]:
+          - generic [ref=e114]: Baseline fixes
+          - generic [ref=e115]: "5"
+        - generic [ref=e116]:
+          - generic [ref=e117]: Max shift
+          - generic [ref=e118]: 41 px
+      - generic [ref=e119]:
+        - figure "Animated candidate" [ref=e120]:
+          - generic [ref=e121]: Animated candidate
+        - figure "Overlay" [ref=e123]:
+          - generic [ref=e124]: Overlay
+          - img "blend_50 overlay" [ref=e125]
+        - figure "Contact sheet" [ref=e126]:
+          - generic [ref=e127]: Contact sheet
+          - img "blend_50 contact sheet" [ref=e128]
+    - generic [ref=e129]:
+      - heading "blend 35" [level=2] [ref=e131]
+      - generic [ref=e132]:
+        - generic [ref=e133]:
+          - generic [ref=e134]: Status
+          - generic [ref=e135]: valid
+        - generic [ref=e136]:
+          - generic [ref=e137]: Score
+          - generic [ref=e138]: "23.234"
+        - generic [ref=e139]:
+          - generic [ref=e140]: Waist stddev
+          - generic [ref=e141]: "21.267"
+        - generic [ref=e142]:
+          - generic [ref=e143]: Floor penetration
+          - generic [ref=e144]: 0 px
+        - generic [ref=e145]:
+          - generic [ref=e146]: Baseline fixes
+          - generic [ref=e147]: "4"
+        - generic [ref=e148]:
+          - generic [ref=e149]: Max shift
+          - generic [ref=e150]: 29 px
+      - generic [ref=e151]:
+        - figure "Animated candidate" [ref=e152]:
+          - generic [ref=e153]: Animated candidate
+        - figure "Overlay" [ref=e155]:
+          - generic [ref=e156]: Overlay
+          - img "blend_35 overlay" [ref=e157]
+        - figure "Contact sheet" [ref=e158]:
+          - generic [ref=e159]: Contact sheet
+          - img "blend_35 contact sheet" [ref=e160]
+    - generic [ref=e161]:
+      - heading "capped 24" [level=2] [ref=e163]
+      - generic [ref=e164]:
+        - generic [ref=e165]:
+          - generic [ref=e166]: Status
+          - generic [ref=e167]: valid
+        - generic [ref=e168]:
+          - generic [ref=e169]: Score
+          - generic [ref=e170]: "24.044"
+        - generic [ref=e171]:
+          - generic [ref=e172]: Waist stddev
+          - generic [ref=e173]: "22.127"
+        - generic [ref=e174]:
+          - generic [ref=e175]: Floor penetration
+          - generic [ref=e176]: 0 px
+        - generic [ref=e177]:
+          - generic [ref=e178]: Baseline fixes
+          - generic [ref=e179]: "1"
+        - generic [ref=e180]:
+          - generic [ref=e181]: Max shift
+          - generic [ref=e182]: 24 px
+      - generic [ref=e183]:
+        - figure "Animated candidate" [ref=e184]:
+          - generic [ref=e185]: Animated candidate
+        - figure "Overlay" [ref=e187]:
+          - generic [ref=e188]: Overlay
+          - img "capped_24 overlay" [ref=e189]
+        - figure "Contact sheet" [ref=e190]:
+          - generic [ref=e191]: Contact sheet
+          - img "capped_24 contact sheet" [ref=e192]
+    - generic [ref=e193]:
+      - heading "capped 12" [level=2] [ref=e195]
+      - generic [ref=e196]:
+        - generic [ref=e197]:
+          - generic [ref=e198]: Status
+          - generic [ref=e199]: valid
+        - generic [ref=e200]:
+          - generic [ref=e201]: Score
+          - generic [ref=e202]: "28.519"
+        - generic [ref=e203]:
+          - generic [ref=e204]: Waist stddev
+          - generic [ref=e205]: "27.469"
+        - generic [ref=e206]:
+          - generic [ref=e207]: Floor penetration
+          - generic [ref=e208]: 0 px
+        - generic [ref=e209]:
+          - generic [ref=e210]: Baseline fixes
+          - generic [ref=e211]: "1"
+        - generic [ref=e212]:
+          - generic [ref=e213]: Max shift
+          - generic [ref=e214]: 12 px
+      - generic [ref=e215]:
+        - figure "Animated candidate" [ref=e216]:
+          - generic [ref=e217]: Animated candidate
+        - figure "Overlay" [ref=e219]:
+          - generic [ref=e220]: Overlay
+          - img "capped_12 overlay" [ref=e221]
+        - figure "Contact sheet" [ref=e222]:
+          - generic [ref=e223]: Contact sheet
+          - img "capped_12 contact sheet" [ref=e224]
+    - generic [ref=e225]:
+      - heading "strict waist" [level=2] [ref=e227]
+      - generic [ref=e228]:
+        - generic [ref=e229]:
+          - generic [ref=e230]: Status
+          - generic [ref=e231]: invalid
+        - generic [ref=e232]:
+          - generic [ref=e233]: Score
+          - generic [ref=e234]: "3001.375"
+        - generic [ref=e235]:
+          - generic [ref=e236]: Waist stddev
+          - generic [ref=e237]: "0.4"
+        - generic [ref=e238]:
+          - generic [ref=e239]: Floor penetration
+          - generic [ref=e240]: 43 px
+        - generic [ref=e241]:
+          - generic [ref=e242]: Baseline fixes
+          - generic [ref=e243]: "1"
+        - generic [ref=e244]:
+          - generic [ref=e245]: Max shift
+          - generic [ref=e246]: 84 px
+      - generic [ref=e247]:
+        - figure "Animated candidate" [ref=e248]:
+          - generic [ref=e249]: Animated candidate
+        - figure "Overlay" [ref=e251]:
+          - generic [ref=e252]: Overlay
+          - img "strict_waist overlay" [ref=e253]
+        - figure "Contact sheet" [ref=e254]:
+          - generic [ref=e255]: Contact sheet
+          - img "strict_waist contact sheet" [ref=e256]
