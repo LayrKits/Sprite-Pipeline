@@ -120,19 +120,22 @@ When stdout reports `needs_vertical_alignment: true`, the orchestrator also
 returns a `confirmation_gate` with `status: pending_user_confirmation` and a
 `validation_viewer` path. In normal use, open that review through the
 server-hosted sprite viewer so the navigation and manual frame-save controls are
-available. Present the candidates to the user, and do not promote an aligned
-sheet until the user explicitly confirms it. Treat this review page as the
-alignment approval gate every time the workflow runs, not only when the
-automatic recommendation is rejected. Ask the user to pick the candidate and
-call out any remaining fixes. Each method should be visible as a playing
-animation with guide lines. Candidate generation writes an immutable method
-candidate set under `candidates/` and a separate editable set under
-`working_copies/`. Manual frame nudges save only into the working copy. Restore
-from candidate replaces the working copy with the immutable candidate and resets
-the offset report. Finalize opens the current working copy in the sprite viewer.
-Attempt automatic cleanup aligns the selected method's detected frame bottoms to
-the fixed ground guide line and saves that result into the working copy, so it
-can be reviewed or restored without changing the immutable candidate.
+available. Run `node tools/serve_sprite_viewer.mjs` from the project root and
+open `/alignment-review?path=<validation_viewer_path>` in the integrated browser
+when available, or a regular browser otherwise. Present the candidates to the
+user, and do not promote an aligned sheet until the user explicitly confirms it.
+Treat this review page as the alignment approval gate every time the workflow
+runs, not only when the automatic recommendation is rejected. Ask the user to
+pick the candidate and call out any remaining fixes. Each method should be
+visible as a playing animation with guide lines. Candidate generation writes an
+immutable method candidate set under `candidates/` and a separate editable set
+under `working_copies/`. Manual frame nudges save only into the working copy.
+Restore from candidate replaces the working copy with the immutable candidate
+and resets the offset report. Finalize opens the current working copy in the
+sprite viewer. Attempt automatic cleanup aligns the selected method's detected
+frame bottoms to the fixed ground guide line and saves that result into the
+working copy, so it can be reviewed or restored without changing the immutable
+candidate.
 If fixes are requested, make them as an explicit new candidate, use the hosted
 review's manual per-frame save flow, or rerun the alignment workflow, then
 return to this same candidate review gate. Do not add a second review stage for

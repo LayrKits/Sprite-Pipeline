@@ -3,6 +3,9 @@
 Use these folders for the video-to-sprite-sheet workflow:
 
 - `Videos/`: source animation videos. Keep originals here.
+- `Videos/To Be Processed/`: queued input videos. When a user asks to process
+  an animation without naming or attaching a source, check this folder before
+  asking them to provide a new video.
 - `work/extracted/<character>/<action>/`: frame images extracted from one video
   animation, plus the extraction report.
 - `work/matted/<character>/<action>/`: transparent PNGs produced by the light

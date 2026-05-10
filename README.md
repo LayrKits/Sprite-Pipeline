@@ -28,7 +28,8 @@ sheets, and project-specific art.
   animations.
 - Writes a horizontal sprite strip, matching individual frame cells, a preview
   image, and a JSON validation report.
-- Lets you inspect final sheets in a static browser viewer before promotion.
+- Lets you inspect generated and final sheets in a browser viewer before
+  promotion.
 
 The core before/after is simple: rough character motion in, reviewable game-art
 sprite strip out.
@@ -62,15 +63,16 @@ sprite strip out.
    - `docs/reference/PROMPTING_VIDEO_MODELS.md` for Kling or other
      image-to-video prompts.
 4. To process footage, follow `docs/QUICKSTART.md`: extract frames, matte if
-   needed, build the sprite sheet, review the preview/report, and promote only
-   approved outputs.
-5. After promotion, run:
+   needed, build the sprite sheet, review the preview/report, open the viewer,
+   and promote only approved outputs.
+5. After processing, run the viewer server:
 
    ```bash
-   python tools/build_sprite_gallery_manifest.py
+   node tools/serve_sprite_viewer.mjs
    ```
 
-6. Open `sprite_viewer.html` directly in a browser to inspect final sheets.
+6. Open the printed local URL in a browser to inspect the generated sheet or
+   promoted final sheets.
 7. If using an AI assistant, give it
    `skills/sprite-sheet-pipeline/SKILL.md` or install that folder in the
    assistant's skill system. Ask it to use the `sprite-sheet-pipeline` skill.
@@ -86,7 +88,9 @@ sprite strip out.
 - `skills/sprite-sheet-pipeline/`: AI-assistant skill that routes image
   prompting, video prompting, processing, validation, and promotion tasks to the
   right docs.
-- `sprite_viewer.html`: static browser viewer for horizontal sprite sheets.
+- `sprite_viewer.html`: browser viewer for horizontal sprite sheets.
+- `tools/serve_sprite_viewer.mjs`: local server for live sheet scanning,
+  direct work-in-progress sheet review, and alignment candidate review pages.
 - `sprite_gallery_manifest.js`: empty starter manifest for the viewer.
 - `sprite_gallery_pins.json`: empty starter pin list for the viewer.
 - Empty `Videos/`, `work/`, `Final Sprite Sheets/`, and `Cleanup/` folders with
@@ -97,12 +101,13 @@ sprite strip out.
 1. Put source animation videos in `Videos/` or `Videos/To Be Processed/`.
 2. Extract ordered frames into `work/extracted/<character>/<action>/`.
 3. Matte light backgrounds into `work/matted/<character>/<action>/` when needed.
-4. Build a sprite strip with `tools/animation_pipeline.py`.
+4. Build a sprite strip with `tools/animation_pipeline.py`. Default to 24
+   frames when no frame count is specified.
 5. Review the preview image and JSON report.
-6. Promote only approved sheets and matching cells into
+6. Run `node tools/serve_sprite_viewer.mjs` and inspect the generated sheet in a
+   browser.
+7. Promote only approved sheets and matching cells into
    `Final Sprite Sheets/<GameName>/<CharacterName>/<animation>/`.
-7. Run `python tools/build_sprite_gallery_manifest.py`.
-8. Open `sprite_viewer.html` directly in a browser.
 
 See `docs/QUICKSTART.md` for copy-paste commands.
 

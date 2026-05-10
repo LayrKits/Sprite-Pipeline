@@ -9,6 +9,23 @@ sheet process has been archived under
 The source of truth is now an animation video. Frame extraction is the first
 active processing step before cleanup and layout.
 
+If a user asks to create an animation and provides only a still image, this repo
+does not process that image directly into an animation sheet. Reply in substance:
+
+> This pipeline is designed to process videos into sprite sheets. Would you like
+> me to write a prompt for a video model based on the provided image and
+> animation description?
+
+Adjust the response to what the user supplied. An image plus motion description
+can become an image-to-video prompt. An image without motion details needs the
+desired animation before a useful video prompt can be written.
+
+If the user gives no source file, first check whether they intend the queued
+workspace inputs in `Videos/To Be Processed/`. When videos are present there,
+process or ask the user to choose from them. Only ask for a new source video
+after confirming there is no named video, extracted frame folder, or queued
+video to process.
+
 Use FFmpeg first:
 
 ```bash
@@ -119,6 +136,37 @@ The script performs the durable work:
 foreground-normalized export; that older mode recenters each frame to
 `TARGET_CENTER_X=128` and grounds it to `TARGET_GROUND_Y=220`.
 
+If the user does not specify a desired frame count, build a 24-frame output by
+default. Pass `--frames 24` so the source frame folder is checked explicitly and
+name the resulting sheet and frame folder with `24f_256`.
+
+## Post-Processing Review
+
+After video processing completes, run the sprite viewer server from the project
+root and open the relevant review page:
+
+```bash
+node tools/serve_sprite_viewer.mjs
+```
+
+Use the integrated browser when available. If there is no integrated browser,
+open the printed local URL in a regular browser. For a generated sheet that has
+not yet been promoted, open it directly with:
+
+```text
+http://127.0.0.1:8000/sprite_viewer.html?sheet=work/sheets/hero/run/hero_run_24f_256.png
+```
+
+When vertical or horizontal alignment has run and the workflow returns a
+`validation_viewer` or candidate review path, open that page instead:
+
+```text
+http://127.0.0.1:8000/alignment-review?path=<validation_viewer_path>
+```
+
+The viewer gate is mandatory before promotion. Present the running animation or
+alignment candidates to the user and ask for approval or requested fixes.
+
 ## Background Modes
 
 Use `--background-mode alpha` when extracted frames already contain useful
@@ -127,13 +175,13 @@ transparency.
 ```bash
 python tools/animation_pipeline.py \
   --source-frames-dir work/extracted/hero/run \
-  --frames 12 \
+  --frames 24 \
   --background-mode alpha \
   --layout-mode preserve-canvas \
-  --output work/sheets/hero/run/hero_run_12f_256.png \
-  --preview work/previews/hero_run_12f_preview.png \
-  --frames-dir work/frames/hero/run_12f_256 \
-  --report work/reports/hero_run_12f_report.json \
+  --output work/sheets/hero/run/hero_run_24f_256.png \
+  --preview work/previews/hero_run_24f_preview.png \
+  --frames-dir work/frames/hero/run_24f_256 \
+  --report work/reports/hero_run_24f_report.json \
   --frame-prefix hero_run
 ```
 
@@ -199,21 +247,20 @@ Promote only after:
 - adjacent-frame warnings have been visually reviewed
 - the frame count and timing are reflected in the consuming game
 
-For vertical-alignment outputs, the candidate review page is the approval gate.
-Open it through the server-hosted sprite viewer whenever the alignment workflow
-runs, ask the user to pick the candidate, and ask whether any fixes are still
-needed before promotion. The hosted review must show each method as a playing
-animation with guide lines. Candidate generation writes two sheet sets: immutable
-method candidates for detailed review, and matching `working_copies/` sheets for
-user edits. Manual frame nudges save only into the working copy. Restore resets
-the working copy from the immutable candidate. Finalize opens the working copy
-in the sprite viewer. Attempt automatic cleanup aligns the selected method's
-detected frame bottoms to the fixed ground guide line, writes the result to the
-working copy, and leaves Restore available if the result is too aggressive. If
-fixes are needed, make them as an explicit new candidate, use the hosted
-review's manual per-frame save flow, or rerun the alignment workflow and return
-to the candidate review gate. Do not add a second review stage for minor frame
-nudges.
+For vertical- or horizontal-alignment outputs, the candidate review page is the
+approval gate. Open it through the server-hosted sprite viewer whenever an
+alignment workflow runs, ask the user to pick the candidate, and ask whether any
+fixes are still needed before promotion. The hosted review must show each method
+as a playing animation with guide lines. Candidate generation writes two sheet
+sets: immutable method candidates for detailed review, and matching
+`working_copies/` sheets for user edits. Manual frame nudges save only into the
+working copy. Restore resets the working copy from the immutable candidate.
+Finalize opens the working copy in the sprite viewer. Attempt automatic cleanup
+may adjust the selected method's working copy and leaves Restore available if
+the result is too aggressive. If fixes are needed, make them as an explicit new
+candidate, use the hosted review's manual per-frame save flow, or rerun the
+alignment workflow and return to the candidate review gate. Do not add a second
+review stage for minor frame nudges.
 
 ## Validation Rules
 

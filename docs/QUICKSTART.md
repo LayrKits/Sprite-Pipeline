@@ -1,9 +1,16 @@
 # Quickstart
 
 Use this when you have a Kling MP4 or other character animation video and need a
-clean horizontal `256 x 256` sprite strip. The current default target is a
-12-frame sheet at 256px cells, with a 24-frame 256px sheet kept when a smoother
-reference is useful.
+clean horizontal `256 x 256` sprite strip. If no frame count is specified, the
+default target is a 24-frame sheet at 256px cells.
+
+If you only have a still image, first create source footage with an
+image-to-video model. In that case, ask for or write a video-model prompt based
+on the image and desired animation; do not run the cleanup pipeline until a
+video or extracted frame folder exists.
+
+If no file is named or attached, check `Videos/To Be Processed/` for queued
+videos before asking for a new source.
 
 ## Setup
 
@@ -80,13 +87,13 @@ Use this when frame extraction produced transparent PNGs:
 ```bash
 python tools/animation_pipeline.py \
   --source-frames-dir work/matted/hero/run \
-  --frames 12 \
+  --frames 24 \
   --background-mode alpha \
   --layout-mode preserve-canvas \
-  --output work/sheets/hero/run/hero_run_12f_256.png \
-  --preview work/previews/hero_run_12f_preview.png \
-  --frames-dir work/frames/hero/run_12f_256 \
-  --report work/reports/hero_run_12f_report.json \
+  --output work/sheets/hero/run/hero_run_24f_256.png \
+  --preview work/previews/hero_run_24f_preview.png \
+  --frames-dir work/frames/hero/run_24f_256 \
+  --report work/reports/hero_run_24f_report.json \
   --frame-prefix hero_run
 ```
 
@@ -115,7 +122,8 @@ python tools/animation_pipeline.py \
 - Put only one animation in each `work/extracted/<character>/<action>/` folder.
 - Name frames so natural filename sorting matches playback order, for example
   `0001.png`, `0002.png`, `0003.png`.
-- Pass `--frames` as an explicit safety check.
+- Pass `--frames` as an explicit safety check. Use `--frames 24` when the user
+  does not request a specific frame count.
 - Crop only watermark/UI bands. Do not crop around the character, or each
   animation can end up with a different effective zoom.
 - Use `--background-mode alpha` for already-transparent frames.
@@ -134,10 +142,40 @@ Check these files before promotion:
 
 Warnings are not automatic failures. They mean inspect before shipping.
 
-Refresh the static viewer manifest after promotion. It scans
-`Final Sprite Sheets/` recursively, feeds the latest ten sheets to the thumbnail
-picker, populates the Game/Character/Animation selectors, and skips individual
-`frames/` folders:
+## Open The Viewer
+
+After processing finishes, run the live sprite viewer server from the project
+root:
+
+```bash
+node tools/serve_sprite_viewer.mjs
+```
+
+Open the printed URL in the integrated browser when available. If an integrated
+browser is unavailable, use a regular browser. For a newly generated sheet that
+is still in `work/`, open it with the direct `sheet` query:
+
+```text
+http://127.0.0.1:8000/sprite_viewer.html?sheet=work/sheets/hero/run/hero_run_24f_256.png
+```
+
+For promoted sheets, use the Game/Character/Animation selectors or a direct
+`sheet` query to the promoted sheet path. The server scans `Final Sprite Sheets/`
+when the viewer loads, so rebuilding the static manifest is not part of the
+normal processing review.
+
+If vertical or horizontal alignment ran and produced a candidate review path,
+open the alignment page instead of the plain sheet viewer:
+
+```text
+http://127.0.0.1:8000/alignment-review?path=<validation_viewer_path>
+```
+
+Ask the user to approve the viewed sheet or alignment candidate before
+promotion.
+
+Refresh the static pinned-gallery manifest only when intentionally updating
+`sprite_gallery_manifest.js` from `sprite_gallery_pins.json`:
 
 ```bash
 python tools/build_sprite_gallery_manifest.py

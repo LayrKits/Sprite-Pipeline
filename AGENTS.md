@@ -16,11 +16,41 @@ Default production path:
 - optional matting
 - `tools/animation_pipeline.py`
 - preview/report review
+- server-hosted viewer review
 - promote approved outputs
 
 Use `--layout-mode preserve-canvas` for normal video-derived sheets. Use
 `fit-foreground` only for legacy recovery or an explicit foreground-normalized
 export.
+
+If the user does not specify a frame count, default to a 24-frame output. Pass
+`--frames 24` to `tools/animation_pipeline.py` and name outputs with `24f_256`.
+
+## Source Availability Gate
+
+This pipeline processes videos or already-extracted ordered frames into sprite
+sheets. It does not create animation sprite sheets directly from a single still
+image.
+
+If the user asks to create an animation and provides only an image, with no
+source video or extracted frame folder, respond in substance:
+
+> This pipeline is designed to process videos into sprite sheets. Would you like
+> me to write a prompt for a video model based on the provided image and
+> animation description?
+
+Tailor the wording to the details the user provided. If they gave an image and
+an animation description, offer to write the image-to-video prompt from both. If
+they gave an image but no animation description, ask what motion they want while
+still making clear that the pipeline needs source video before cleanup and
+sprite-sheet processing can begin.
+
+If the user asks to process or create an animation but does not attach or name a
+source, do not assume the request is image-only. First check
+`Videos/To Be Processed/` for queued videos. If queued videos exist, proceed
+with or ask the user to choose from those videos as appropriate. If no video,
+extracted frame folder, or queued video exists, ask for a source video or offer
+to write a video-model prompt when a still image/reference is available.
 
 ## Prompting References
 
@@ -53,7 +83,7 @@ frames into game-ready sheets.
 
 ## Current Workflow
 
-1. Put source animation videos in `Videos/`.
+1. Put source animation videos in `Videos/` or `Videos/To Be Processed/`.
 2. Extract the chosen animation frames into `work/extracted/<character>/<action>/`
    as ordered image files such as `frame_0001.png`, `frame_0002.png`,
    `frame_0003.png`. Crop only watermark/UI bands at this stage; do not crop
@@ -66,9 +96,10 @@ frames into game-ready sheets.
 6. Run the vertical alignment assessment before promotion for jump, fall,
    landing, or any sheet that visually jitters, hovers, sinks, or drifts on the
    ground line. Run alignment only when the assessment says it is needed.
-7. Promote only approved sprite sheets and their exact individual `256 x 256`
+7. Run the sprite viewer server and open the relevant viewer page for review.
+8. Promote only approved sprite sheets and their exact individual `256 x 256`
    cells into `Final Sprite Sheets/<GameName>/<CharacterName>/`.
-8. Move the source video into `Videos/Processed/` and move non-promoted scratch
+9. Move the source video into `Videos/Processed/` and move non-promoted scratch
    outputs into `Cleanup/`.
 
 Frame extraction is intentionally outside this tool for now. The extraction step
@@ -98,8 +129,11 @@ the useful core. It still:
   frames from Kling MP4s or other source videos.
 - `tools/matte_light_background.py`: first-pass light-background matting for
   Kling-style frames before sprite layout.
-- `tools/build_sprite_gallery_manifest.py`: refreshes the static viewer's sheet
-  catalog from `Final Sprite Sheets/`, skips final per-frame folders so the
+- `tools/serve_sprite_viewer.mjs`: serves the sprite viewer, live-scans
+  `Final Sprite Sheets/`, opens work-in-progress sheets by query, and hosts
+  alignment candidate review pages.
+- `tools/build_sprite_gallery_manifest.py`: refreshes the optional pinned static
+  manifest from `Final Sprite Sheets/`, skips final per-frame folders so the
   gallery stays sheet-only, and marks the latest ten for the thumbnail picker.
 - `isolated_workflows/vertical_frame_alignment/`: copy-derived assessment and
   vertical-only alignment workflow. It does not modify the main pipeline output
@@ -157,13 +191,13 @@ transparency:
 ```bash
 python tools/animation_pipeline.py \
   --source-frames-dir work/matted/hero/run \
-  --frames 12 \
+  --frames 24 \
   --background-mode alpha \
   --layout-mode preserve-canvas \
-  --output work/sheets/hero/run/hero_run_12f_256.png \
-  --preview work/previews/hero_run_12f_preview.png \
-  --frames-dir work/frames/hero/run_12f_256 \
-  --report work/reports/hero_run_12f_report.json \
+  --output work/sheets/hero/run/hero_run_24f_256.png \
+  --preview work/previews/hero_run_24f_preview.png \
+  --frames-dir work/frames/hero/run_24f_256 \
+  --report work/reports/hero_run_24f_report.json \
   --frame-prefix hero_run
 ```
 
@@ -215,6 +249,35 @@ For normal video outputs, the consuming game should use a consistent cell pivot
 or origin across animations because the source canvas scale is preserved. Only
 foreground-fit legacy outputs use `TARGET_GROUND_Y`, currently `220`.
 
+## Post-Processing Viewer Gate
+
+When video processing is completed, run the sprite viewer server from the project
+root:
+
+```bash
+node tools/serve_sprite_viewer.mjs
+```
+
+Open the printed local URL in the integrated browser when available, normally
+`http://127.0.0.1:8000/sprite_viewer.html`. Use a regular browser only when the
+integrated browser is unavailable. For a newly generated or not-yet-promoted
+sheet, open the viewer with a direct sheet query, for example:
+
+```text
+http://127.0.0.1:8000/sprite_viewer.html?sheet=work/sheets/hero/run/hero_run_24f_256.png
+```
+
+If vertical or horizontal alignment ran and produced a candidate review page,
+open that alignment review page instead of the plain sprite viewer, using the
+server-hosted route:
+
+```text
+http://127.0.0.1:8000/alignment-review?path=<validation_viewer_path>
+```
+
+Present the viewer page to the user before promotion and ask for approval or
+requested fixes.
+
 ## Vertical Alignment Assessment
 
 Before promotion, run the assessment on any vertical-motion sheet such as jump,
@@ -252,26 +315,29 @@ Request the assessment HTML/images only when a visual report is useful:
   --write-report
 ```
 
-After alignment, open the candidate review through the server-hosted sprite
-viewer and present the alignment candidates to the user before promotion. Ask
-the user to pick a candidate and to call out any fixes that are still needed.
-The review must show animated loops with guide lines for every method. Candidate
-generation writes an immutable candidate sheet set for method review and a
-separate `working_copies/` sheet set for user edits. Manual nudges in the hosted
-review must save only into the working copy. `Restore from candidate` replaces
-the working copy with the immutable candidate and resets offsets. `Finalize`
-opens the current working copy in the sprite viewer for final visual checking.
-`Attempt automatic cleanup` may replace the selected method's working-copy
-offsets by aligning detected frame bottoms to the fixed ground guide line and
-then saving the working copy; it is still subject to user review and restore.
-Accept a candidate only if it has no floor penetration or canvas clipping,
-contact frames sit on the intended ground line, airborne frames still preserve
-the jump arc, horizontal placement is unchanged, and the matching individual
-frame cells are promoted with the sheet. Do not overwrite the original sheet;
-promote an approved aligned result as a new variant unless explicitly told
-otherwise. Do not add a second review stage for minor frame nudges; if fixes are
-requested, make them as an explicit new candidate or use the hosted review's
-manual per-frame save flow, then return to the candidate review gate.
+After vertical or horizontal alignment, open the candidate review through the
+server-hosted sprite viewer and present the alignment candidates to the user
+before promotion. Ask the user to pick a candidate and to call out any fixes that
+are still needed. The review must show animated loops with guide lines for every
+method. Candidate generation writes an immutable candidate sheet set for method
+review and a separate `working_copies/` sheet set for user edits. Manual nudges
+in the hosted review must save only into the working copy. `Restore from
+candidate` replaces the working copy with the immutable candidate and resets
+offsets. `Finalize` opens the current working copy in the sprite viewer for
+final visual checking. `Attempt automatic cleanup` may replace the selected
+method's working-copy offsets by aligning detected frame bottoms to the fixed
+ground guide line and then saving the working copy; it is still subject to user
+review and restore. Accept a vertical candidate only if it has no floor
+penetration or canvas clipping, contact frames sit on the intended ground line,
+airborne frames still preserve the jump arc, horizontal placement is unchanged,
+and the matching individual frame cells are promoted with the sheet. Accept a
+horizontal candidate only if it fixes unwanted lateral jitter without clipping,
+changing vertical placement, or removing intentional attack/effect travel. Do
+not overwrite the original sheet; promote an approved aligned result as a new
+variant unless explicitly told otherwise. Do not add a second review stage for
+minor frame nudges; if fixes are requested, make them as an explicit new
+candidate or use the hosted review's manual per-frame save flow, then return to
+the candidate review gate.
 
 Promoted output should live under:
 
@@ -286,15 +352,14 @@ all rejected or intermediate generated artifacts for that pass into `Cleanup/`.
 
 ## Sprite Viewer
 
-Open `sprite_viewer.html` directly in a browser. It reads
-`sprite_gallery_manifest.js` and shows the latest ten sprite sheets from
-`Final Sprite Sheets/` in the thumbnail picker. It also populates Game,
-Character, and Animation selectors from the full `GameName/CharacterName`
-folder structure. The manifest skips final `frames/` folders so the gallery
-stays sheet-only.
-
-Refresh the gallery after creating new sheets:
+Run the server-hosted sprite viewer after processing:
 
 ```bash
-python tools/build_sprite_gallery_manifest.py
+node tools/serve_sprite_viewer.mjs
 ```
+
+The server scans `Final Sprite Sheets/` on each viewer load, shows the latest
+sprite sheets in the thumbnail picker, and populates Game, Character, and
+Animation selectors from the full `GameName/CharacterName` folder structure. It
+also serves direct review links for work-in-progress sheets and alignment
+candidate review pages.

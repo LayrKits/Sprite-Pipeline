@@ -19,6 +19,18 @@ project docs; read only the document needed for the current task.
 
 ## Prompting Tasks
 
+If the user asks to create an animation and provides only a still image, do not
+try to process the image directly through the cleanup pipeline. Reply in
+substance:
+
+> This pipeline is designed to process videos into sprite sheets. Would you like
+> me to write a prompt for a video model based on the provided image and
+> animation description?
+
+Tailor the response to the user input. If they provided no animation
+description, ask what motion they want. If they provided no asset at all, check
+`Videos/To Be Processed/` for queued videos before asking for a new source.
+
 For a new character image, first pose, character reference, or transition frame,
 read `docs/reference/PROMPTING_IMAGE_MODELS.md`.
 
@@ -73,14 +85,20 @@ Normal processing order:
 4. Build a horizontal `256 x 256` sprite strip with
    `tools/animation_pipeline.py`.
 5. Review the preview PNG, individual cleaned frames, and JSON report.
-6. Promote only approved sheets and matching cell frames into
+6. Run `node tools/serve_sprite_viewer.mjs` and open the generated sheet in the
+   integrated browser when available, or a regular browser otherwise.
+7. If vertical or horizontal alignment ran, open the server-hosted alignment
+   review page instead of the plain sheet viewer.
+8. Promote only approved sheets and matching cell frames into
    `Final Sprite Sheets/<GameName>/<CharacterName>/<animation>/`.
-7. Refresh `sprite_gallery_manifest.js`.
-8. Open `sprite_viewer.html` to inspect final sheets.
 
 Use `--layout-mode preserve-canvas` for normal video-derived animations. Use
 `--layout-mode fit-foreground` only for legacy recovery or an explicitly
 foreground-normalized export.
+
+If the user does not specify a frame count, default to 24 frames. Pass
+`--frames 24` to `tools/animation_pipeline.py` and use `24f_256` in output
+paths.
 
 ## Validation And Promotion
 

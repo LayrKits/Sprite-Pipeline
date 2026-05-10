@@ -60,8 +60,10 @@ alignment and prints that decision.
 
 When stdout reports `needs_horizontal_alignment: true`, the orchestrator also
 returns a `confirmation_gate` with `status: pending_user_confirmation` and a
-`validation_viewer` path. Open that candidate review before promotion and ask
-the user to approve a candidate.
+`validation_viewer` path. Run `node tools/serve_sprite_viewer.mjs` from the
+project root and open `/alignment-review?path=<validation_viewer_path>` in the
+integrated browser when available, or a regular browser otherwise. Ask the user
+to approve a candidate before promotion.
 
 Candidate generation writes immutable method candidates under `candidates/` and
 matching editable copies under `working_copies/`. Manual offsets in this
